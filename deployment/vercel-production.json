@@ -1,0 +1,11 @@
+{
+  "provider": "vercel",
+  "scope": "zireaelsts-projects",
+  "project": "blockterms",
+  "environment": "production",
+  "releaseMode": "simulation-only",
+  "sourceBranch": "Zireaelst/blockterms-build",
+  "deploymentUrl": "https://blockterms-d0copz78s-zireaelsts-projects.vercel.app",
+  "aliasUrl": "https://blockterms.vercel.app",
+  "deployedAt": "2026-09-10T18:30:57Z"
+}

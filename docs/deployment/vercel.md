@@ -8,11 +8,13 @@ The Vercel project will target `apps/web` as its root directory. Marketing route
 - Preview: every reviewed branch/PR receives an isolated URL and non-production configuration.
 - Production: the release commit used in submission materials.
 
-No application has been deployed yet. Future production and preview URLs belong in a versioned deployment manifest only after they exist.
+The simulation-only MVP is deployed at [blockterms.vercel.app](https://blockterms.vercel.app). Its immutable deployment URL and release scope are recorded in `deployment/vercel-production.json`.
 
 ## Configuration
 
 Public site name, navigation, social metadata, sponsor links, explorer bases, feature flags and service status URLs live in typed site configuration. Secrets remain server-side Vercel environment variables. Client-visible variables may contain public network IDs and contract addresses only.
+
+For the current simulation-only MVP, import the repository root into Vercel. The checked-in `vercel.json` installs the pnpm workspace, builds `@blockterms/web`, and publishes `apps/web/.next`. No runtime environment variables are required for this release.
 
 Build-time validation must fail for missing required production configuration. Optional integrations such as Bazantic remain disabled unless their complete configuration and qualification gate exist.
 
@@ -31,4 +33,3 @@ The Vercel frontend may render public data and call controlled server routes. Te
 - real explorer links resolve and match the release manifest;
 - refresh/deep links work for every route;
 - the production alias points to the reviewed release commit.
-
