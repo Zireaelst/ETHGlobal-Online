@@ -1,0 +1,20 @@
+{
+  "name": "blockterms-workspace",
+  "private": true,
+  "packageManager": "pnpm@10.12.1",
+  "engines": { "node": ">=22.13.1" },
+  "scripts": {
+    "build": "pnpm --filter @blockterms/web build",
+    "dev": "pnpm --filter @blockterms/web dev",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "check:evidence": "node scripts/check-no-fake-evidence.mjs",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:evidence && pnpm build"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.2",
+    "eslint": "10.10.0",
+    "typescript": "7.0.2"
+  }
+}

@@ -6,7 +6,7 @@ An agent requests a narrowly scoped snapshot, compares signed provider quotes, r
 
 ## Status
 
-The repository currently contains the approved product and website design documents. Application code, contracts, deployments, live payments, and transaction evidence have not been created yet.
+The workspace foundation and evidence quality gate now exist. Application code, contracts, deployments, live payments, and transaction evidence have not been created yet.
 
 ## Target sponsor tracks
 
@@ -35,6 +35,11 @@ This is a new project. Continuity tracks are outside scope.
 - [MotionSites adaptation prompt](docs/prompts/motionsites-blockterms.md)
 - [Orca/Codex session prompt](docs/prompts/orca-codex-session.md)
 - [Phase 0 and web foundation implementation plan](docs/superpowers/plans/2026-09-10-phase0-and-web-foundation.md)
+
+## Platform references
+
+- [Next.js installation](https://nextjs.org/docs/app/getting-started/installation)
+- [Vercel monorepos](https://vercel.com/docs/monorepos)
 
 ## Core claim
 
