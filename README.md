@@ -34,10 +34,10 @@ This is a new project. Continuity tracks are outside scope.
 - [Vercel deployment approach](docs/deployment/vercel.md)
 - [MotionSites adaptation prompt](docs/prompts/motionsites-blockterms.md)
 - [Orca/Codex session prompt](docs/prompts/orca-codex-session.md)
+- [Phase 0 and web foundation implementation plan](docs/superpowers/plans/2026-09-10-phase0-and-web-foundation.md)
 
 ## Core claim
 
 > BlockTerms binds a paid, standardized multi-protocol snapshot to a specific block and selected storage fields, then resolves a failed commitment from pre-reserved provider collateral without an LLM judge.
 
 The claim is deliberately narrow. It does not establish the completeness of a Graph query, financial safety, APY correctness, or trustless source-chain finality.
-

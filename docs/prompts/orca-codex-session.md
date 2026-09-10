@@ -6,7 +6,7 @@ Paste the prompt below into a Codex terminal opened at `/Users/toyguntez/orca/ET
 
 You are implementing the fresh ETHOnline 2026 project in this repository. Start by reading `AGENTS.md`, `README.md`, every Markdown file under `docs/`, and the Git status/history. Treat those repository documents as the source of truth. The repo currently has a documentation-only initial commit and no application scaffold.
 
-Do not begin implementation immediately. First use the repository's applicable planning workflow to write a dependency-ordered implementation plan. The plan must separate:
+The first dependency-ordered plan is `docs/superpowers/plans/2026-09-10-phase0-and-web-foundation.md`. Review it against the current repository and execute it only after the owner chooses the execution mode. Do not silently expand its milestone. It separates:
 
 1. Phase 0 integration spikes: real Blocky402 request/settlement binding, two live compatible standardized Graph deployments at an eligible common block, and a bounded EIP-1186 witness verification benchmark on Hedera EVM.
 2. Workspace and Next.js/Vercel foundation.
@@ -20,7 +20,6 @@ The frontend visual brief is `docs/prompts/motionsites-blockterms.md`. Preserve 
 
 Recommend the smallest reliable workspace/tooling choices that support `apps/web`, shared packages, Solidity/Foundry contracts and TypeScript services. Before selecting exact dependency versions or sponsor APIs, verify current official documentation. State any access, testnet funds, API keys, external accounts or product decisions that require the owner.
 
-After writing the plan, stop for review before creating the application scaffold or installing dependencies.
+Before execution, report the plan's external prerequisites and confirm whether this Orca session will execute tasks inline or coordinate supervised workers. Do not create the application scaffold or install dependencies until that choice is explicit.
 
 ---
-
