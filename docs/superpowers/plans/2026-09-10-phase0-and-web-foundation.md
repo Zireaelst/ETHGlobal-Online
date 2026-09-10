@@ -61,8 +61,9 @@ import { extname, join } from "node:path";
 
 const roots = ["apps", "demo", "deployment"];
 const forbidden = [
-  /0x[a-fA-F0-9]{64}/g,
-  /0\.0\.\d{4,}/g,
+  /0x(?:0{64}|[fF]{64}|[aA]{64}|(?:deadbeef){8})/g,
+  /0\.0\.(?:0|1234|12345|9999)\b/g,
+  /\b(?:TX_HASH|TRANSACTION_HASH|CONTRACT_ADDRESS|EXPLORER_URL)\b/g,
 ];
 const allowedFiles = new Set(["demo/evidence/README.md"]);
 
@@ -538,7 +539,7 @@ expect(buildGetProofRequest("0x0000000000000000000000000000000000000001", ["0x0"
 });
 ```
 
-Reject zero slots, more than three slots, non-checksummable addresses, non-quantity block values, `latest`, `safe`, `finalized`, and duplicate slots. The probe must pin a numeric block.
+Reject zero slots, more than three slots, addresses that are not exactly 20 bytes of hex, non-quantity block values, `latest`, `safe`, `finalized`, and duplicate slots. The probe must pin a numeric block.
 
 - [ ] **Step 2: Run red, implement and rerun**
 
@@ -827,7 +828,7 @@ git commit -m "feat: add transparent BlockTerms simulator"
 - Create: `apps/web/e2e/navigation.spec.ts`
 - Create: `apps/web/e2e/landing-viewport.spec.ts`
 - Create: `apps/web/e2e/demo-honesty.spec.ts`
-- Create: `vercel.json`
+- Create: `apps/web/vercel.json`
 - Modify: `package.json`
 - Modify: `docs/deployment/vercel.md`
 - Modify: `README.md`
@@ -857,7 +858,7 @@ Expected: FAIL before Playwright configuration/browser installation is complete.
 
 Use Playwright 1.63.0 with Chromium, `webServer.command: "pnpm dev"`, base URL `http://127.0.0.1:3000`, trace on first retry and no screenshot/video on successful tests.
 
-Create root `vercel.json` only for shared safe headers; do not duplicate Vercel's framework build detection. Document Dashboard configuration: import the GitHub repository, choose `apps/web` as Root Directory, use the detected Next.js build, and keep production secrets server-side. The official monorepo source is `https://vercel.com/docs/monorepos`.
+Create `apps/web/vercel.json` only for shared safe headers so Vercel reads it when `apps/web` is the project Root Directory; do not duplicate Vercel's framework build detection. Document Dashboard configuration: import the GitHub repository, choose `apps/web` as Root Directory, use the detected Next.js build, and keep production secrets server-side. The official monorepo source is `https://vercel.com/docs/monorepos`.
 
 - [ ] **Step 4: Run full local verification**
 
@@ -879,7 +880,7 @@ Inspect 390×844, 900×900, 1440×900, 1920×1080 and 1440×700. Record issues a
 - [ ] **Step 6: Commit**
 
 ```bash
-git add apps/web package.json pnpm-lock.yaml vercel.json docs/deployment/vercel.md README.md
+git add apps/web package.json pnpm-lock.yaml docs/deployment/vercel.md README.md
 git commit -m "test: verify Vercel-ready web experience"
 ```
 
