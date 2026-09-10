@@ -1,7 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { extname, join } from "node:path";
 
-const roots = ["apps", "demo", "deployment"];
+const roots = ["apps/web/src", "packages/protocol/src", "packages/ui/src", "demo/evidence", "deployment"];
 const forbidden = [
   /0x(?:0{64}|[fF]{64}|[aA]{64}|(?:deadbeef){8})/g,
   /0\.0\.(?:0|1234|12345|9999)\b/g,
