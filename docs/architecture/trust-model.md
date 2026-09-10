@@ -38,3 +38,8 @@ The UI must say which fields were checked and against which accepted root. It mu
 
 Live evidence and simulation fixtures use separate directories and badges. Explorer outages do not alter locally verified receipt state. Evidence exports contain public or sanitized artifacts, their hashes, run ID, network and release commit; they never contain credentials or payment authorization secrets.
 
+## Phase 0 witness status
+
+The bounded `eth_getProof` scaffold accepts only one approved 20-byte contract, one explicit numeric block, and one to three unique storage slots. It measures account- and storage-proof bytes and checks the accompanying RPC block number, but it does not accept the witness as valid. Acceptance requires an independently trusted state root, pinned code hash/storage layout, and the later Hedera verifier.
+
+Current live-gate result (2026-09-10): **blocked**. `pnpm --dir spikes/storage-witness probe` stopped because `SOURCE_RPC_URL` and owner-approved pool arguments were not supplied. No public RPC, pool, block, or storage slot was guessed.

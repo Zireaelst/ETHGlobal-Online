@@ -1,0 +1,19 @@
+{
+  "name": "@blockterms/blocky-capability",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "probe": "tsx src/cli.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "4.6.1"
+  },
+  "devDependencies": {
+    "tsx": "4.20.6",
+    "typescript": "7.0.2",
+    "vitest": "5.0.0"
+  }
+}

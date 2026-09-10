@@ -4,6 +4,8 @@ Status values are intentionally absent until implementation produces evidence. A
 
 ## Hedera — AI & Agentic Payments
 
+Read-only capability observation (2026-09-10): `pnpm --dir spikes/blocky-capability probe` queried `https://api.testnet.blocky402.com/supported` and observed the `hedera:testnet` network, `exact` scheme, x402 version 2, and advertised fee payer `0.0.7162784`. The CLI confirmed that no payment was created or settled. This observation does **not** satisfy either live-payment row below.
+
 | Requirement | Planned implementation | Required evidence |
 |---|---|---|
 | Live x402-gated service on Hedera testnet/mainnet settled through Blocky402 | Provider snapshot endpoint | Public endpoint, 402 challenge, Blocky settlement receipt and HashScan link |
@@ -24,6 +26,8 @@ Optional HCS audit is useful only after the base flow works. ERC-8004, HCS-14, A
 | Public repo and 2–4 minute video | This repository and common 240-second video | Public URLs and playable duration |
 
 Fixtures may test UI and codecs but cannot satisfy live-data requirements. `schemaVersion`, `subgraphVersion`, `methodologyVersion`, deployment and block identity remain separate fields.
+
+Current live-gate result (2026-09-10): **blocked**. `pnpm --dir spikes/graph-standardized probe` stopped because `GRAPH_ENDPOINT_A` and the remaining required live endpoint inputs were not supplied. No fixture was used and no qualification result is claimed.
 
 ## Bazantic — conditional Sponsor API Recipe
 
@@ -48,4 +52,3 @@ The integration must preserve Blocky402 settlement, order/payment binding, and i
 - No third sponsor submission unless every relevant row above has working evidence.
 
 Primary source: [ETHOnline 2026 prizes](https://ethglobal.com/events/ethonline2026/prizes).
-
