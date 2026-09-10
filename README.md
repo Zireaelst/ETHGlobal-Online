@@ -6,7 +6,7 @@ An agent requests a narrowly scoped snapshot, compares signed provider quotes, r
 
 ## Status
 
-The workspace foundation and evidence quality gate now exist. Application code, contracts, deployments, live payments, and transaction evidence have not been created yet.
+The web MVP, protocol state model, bounded integration probes, and evidence quality gate are implemented. The public experience is deployable to Vercel and the demo is explicitly simulation-only. Contracts, live payments, and transaction evidence remain outside this foundation release.
 
 ## Target sponsor tracks
 
@@ -24,6 +24,8 @@ This is a new project. Continuity tracks are outside scope.
 - `/providers` — provider collateral and service publication
 - `/demo` — buyer-agent product console
 - `/docs` — developer onboarding and protocol documentation
+- `/product` — product scope and current release boundary
+- `/developers` — implementation entry points and integration status
 
 ## Design and delivery documents
 
