@@ -2,6 +2,20 @@ export type EvidenceMode = "simulation" | "live";
 
 type Base = { orderId: string; mode: EvidenceMode };
 
+const ORDER_STATE_KINDS = [
+  "quoted",
+  "reserved",
+  "payment-pending",
+  "paid",
+  "accepted",
+  "warranty-paid",
+  "unpaid-expired",
+] as const;
+type OrderStateKind = (typeof ORDER_STATE_KINDS)[number];
+
+const INVALID_DELIVERY_REASONS = ["wrong-block", "wrong-field", "invalid-proof", "timeout"] as const;
+type InvalidDeliveryReason = (typeof INVALID_DELIVERY_REASONS)[number];
+
 export type OrderState =
   | (Base & { kind: "quoted" })
   | (Base & { kind: "reserved" })
@@ -28,11 +42,122 @@ type AcceptedState = Extract<OrderState, { kind: "accepted" }>;
 type WarrantyPaidState = Extract<OrderState, { kind: "warranty-paid" }>;
 type UnpaidExpiredState = Extract<OrderState, { kind: "unpaid-expired" }>;
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null ? value as Record<string, unknown> : undefined;
+}
+
+function describe(value: unknown): string {
+  try {
+    const serialized = JSON.stringify(value);
+    return serialized === undefined ? String(value) : serialized;
+  } catch {
+    return String(value);
+  }
+}
+
+function eventType(value: unknown): string {
+  const record = asRecord(value);
+  return typeof record?.type === "string" ? record.type : "<unknown>";
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function invalidState(state: unknown, operation: string, event?: unknown): never {
+  const eventContext = event === undefined ? "" : ` for event ${JSON.stringify(eventType(event))}`;
+  const eventDetails = event === undefined ? "" : `; event: ${describe(event)}`;
+  throw new Error(`Invalid order state while ${operation}${eventContext}; state: ${describe(state)}${eventDetails}`);
+}
+
+function assertValidState(state: unknown, operation: string, event?: unknown): asserts state is OrderState {
+  const record = asRecord(state);
+  const kind = record?.kind;
+  const eventContext = event === undefined ? "" : ` for event ${JSON.stringify(eventType(event))}`;
+  const eventDetails = event === undefined ? "" : `; event: ${describe(event)}`;
+
+  if (typeof kind !== "string" || !ORDER_STATE_KINDS.includes(kind as OrderStateKind)) {
+    throw new Error(`Unknown order state kind ${describe(kind)} while ${operation}${eventContext}; state: ${describe(state)}${eventDetails}`);
+  }
+  if (!record) invalidState(state, operation, event);
+
+  if (!isNonEmptyString(record.orderId) || (record.mode !== "simulation" && record.mode !== "live")) {
+    invalidState(state, operation, event);
+  }
+
+  switch (kind) {
+    case "payment-pending":
+      if (!isNonEmptyString(record.paymentId) || typeof record.reconciledUnpaid !== "boolean") {
+        invalidState(state, operation, event);
+      }
+      break;
+    case "paid":
+      if (!isNonEmptyString(record.originalPaymentReceiptId)) invalidState(state, operation, event);
+      break;
+    case "accepted":
+      if (!isNonEmptyString(record.deliveryId)) invalidState(state, operation, event);
+      break;
+    case "warranty-paid":
+      if (!isNonEmptyString(record.originalPaymentReceiptId) ||
+        (record.warrantyReceiptId !== undefined && !isNonEmptyString(record.warrantyReceiptId))) {
+        invalidState(state, operation, event);
+      }
+      break;
+    case "quoted":
+    case "reserved":
+    case "unpaid-expired":
+      break;
+  }
+}
+
+function validateEvent(state: OrderState, event: unknown): asserts event is OrderEvent {
+  const record = asRecord(event) ?? {};
+  const type = record?.type;
+  const context = ` for state ${JSON.stringify(state.kind)}; event: ${describe(event)}`;
+
+  switch (type) {
+    case "reserve":
+    case "reconcile-unpaid":
+    case "expire-unpaid":
+      return;
+    case "submit-payment":
+      if (!isNonEmptyString(record.paymentId)) {
+        throw new Error(`Invalid submit-payment event: paymentId must be a non-empty string${context}`);
+      }
+      return;
+    case "observe-payment":
+      if (!isNonEmptyString(record.receiptId)) {
+        throw new Error(`Invalid observe-payment event: receiptId must be a non-empty string${context}`);
+      }
+      return;
+    case "accept-delivery":
+      if (!isNonEmptyString(record.deliveryId)) {
+        throw new Error(`Invalid accept-delivery event: deliveryId must be a non-empty string${context}`);
+      }
+      return;
+    case "finalize-invalid-delivery":
+      if (!INVALID_DELIVERY_REASONS.includes(record.reason as InvalidDeliveryReason)) {
+        throw new Error(
+          `Invalid finalize-invalid-delivery reason ${describe(record.reason)}; allowed reasons: ${INVALID_DELIVERY_REASONS.join(", ")}${context}`,
+        );
+      }
+      return;
+    case "record-warranty-receipt":
+      if (!isNonEmptyString(record.receiptId)) {
+        throw new Error(`Invalid record-warranty-receipt event: receiptId must be a non-empty string${context}`);
+      }
+      return;
+    default:
+      throw new Error(`Unknown order event type ${describe(type)}${context}`);
+  }
+}
+
 function invalidTransition(state: OrderState, event: OrderEvent): never {
   throw new Error(`Invalid order transition from ${state.kind} for event ${event.type}: ${JSON.stringify(event)}`);
 }
 
 export function isTerminal(state: OrderState): boolean {
+  assertValidState(state, "checking terminal status");
   switch (state.kind) {
     case "accepted":
     case "warranty-paid":
@@ -43,6 +168,8 @@ export function isTerminal(state: OrderState): boolean {
     case "payment-pending":
     case "paid":
       return false;
+    default:
+      throw new Error("Unreachable order state kind while checking terminal status");
   }
 }
 
@@ -59,6 +186,9 @@ export function reduceOrder(state: OrderState, event: { type: "record-warranty-r
 export function reduceOrder(state: OrderState, event: { type: "expire-unpaid" }): UnpaidExpiredState;
 export function reduceOrder(state: OrderState, event: OrderEvent): OrderState;
 export function reduceOrder(state: OrderState, event: OrderEvent): OrderState {
+  assertValidState(state, "reducing", event);
+  validateEvent(state, event);
+
   // Recording the separate warranty receipt enriches an already terminal
   // warranty result; it does not reopen or reverse the original payment.
   if (state.kind === "warranty-paid" && event.type === "record-warranty-receipt" && state.warrantyReceiptId === undefined) {
@@ -116,6 +246,7 @@ export function reduceOrder(state: OrderState, event: OrderEvent): OrderState {
 }
 
 export function evidenceAvailability(state: OrderState): "none" | "payment" | "delivery" | "terminal" {
+  assertValidState(state, "checking evidence availability");
   switch (state.kind) {
     case "quoted":
     case "reserved":
@@ -128,5 +259,7 @@ export function evidenceAvailability(state: OrderState): "none" | "payment" | "d
     case "warranty-paid":
     case "unpaid-expired":
       return "terminal";
+    default:
+      throw new Error("Unreachable order state kind while checking evidence availability");
   }
 }
