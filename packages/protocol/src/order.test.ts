@@ -29,6 +29,48 @@ describe("reduceOrder", () => {
     expect(warranted.warrantyReceiptId).toBeUndefined();
   });
 
+  it.each([
+    {
+      name: "quoted",
+      state: JSON.parse(
+        '{"kind":"quoted","orderId":"demo-order","mode":"simulation","warrantyReceiptId":"forged-receipt"}',
+      ) as unknown as OrderState,
+      events: [
+        { type: "reserve" },
+        { type: "submit-payment", paymentId: "sim-payment" },
+        { type: "observe-payment", receiptId: "sim-receipt" },
+        { type: "finalize-invalid-delivery", reason: "wrong-block" },
+      ] as OrderEvent[],
+    },
+    {
+      name: "reserved",
+      state: JSON.parse(
+        '{"kind":"reserved","orderId":"demo-order","mode":"simulation","warrantyReceiptId":"forged-receipt"}',
+      ) as unknown as OrderState,
+      events: [
+        { type: "submit-payment", paymentId: "sim-payment" },
+        { type: "observe-payment", receiptId: "sim-receipt" },
+        { type: "finalize-invalid-delivery", reason: "wrong-block" },
+      ] as OrderEvent[],
+    },
+    {
+      name: "paid",
+      state: JSON.parse(
+        '{"kind":"paid","orderId":"demo-order","mode":"simulation","originalPaymentReceiptId":"sim-receipt","warrantyReceiptId":"forged-receipt"}',
+      ) as unknown as OrderState,
+      events: [{ type: "finalize-invalid-delivery", reason: "wrong-block" }] as OrderEvent[],
+    },
+  ])("does not propagate a forged warranty receipt from deserialized $name state", ({ state, events }) => {
+    const warranted = events.reduce<OrderState>((current, event) => reduceOrder(current, event), state);
+
+    expect(warranted).toEqual({
+      kind: "warranty-paid",
+      orderId: "demo-order",
+      mode: "simulation",
+      originalPaymentReceiptId: "sim-receipt",
+    });
+  });
+
   it("does not allow a terminal order to transition", () => {
     const terminal: OrderState = { kind: "accepted", orderId: "demo-order", mode: "simulation", deliveryId: "sim-delivery" };
     expect(isTerminal(terminal)).toBe(true);

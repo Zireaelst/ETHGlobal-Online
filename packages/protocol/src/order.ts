@@ -192,7 +192,13 @@ export function reduceOrder(state: OrderState, event: OrderEvent): OrderState {
   // Recording the separate warranty receipt enriches an already terminal
   // warranty result; it does not reopen or reverse the original payment.
   if (state.kind === "warranty-paid" && event.type === "record-warranty-receipt" && state.warrantyReceiptId === undefined) {
-    return { ...state, warrantyReceiptId: event.receiptId };
+    return {
+      kind: "warranty-paid",
+      orderId: state.orderId,
+      mode: state.mode,
+      originalPaymentReceiptId: state.originalPaymentReceiptId,
+      warrantyReceiptId: event.receiptId,
+    };
   }
 
   if (isTerminal(state)) {
@@ -203,38 +209,65 @@ export function reduceOrder(state: OrderState, event: OrderEvent): OrderState {
     case "quoted":
       switch (event.type) {
         case "reserve":
-          return { ...state, kind: "reserved" };
+          return { kind: "reserved", orderId: state.orderId, mode: state.mode };
         default:
           return invalidTransition(state, event);
       }
     case "reserved":
       switch (event.type) {
         case "submit-payment":
-          return { ...state, kind: "payment-pending", paymentId: event.paymentId, reconciledUnpaid: false };
+          return {
+            kind: "payment-pending",
+            orderId: state.orderId,
+            mode: state.mode,
+            paymentId: event.paymentId,
+            reconciledUnpaid: false,
+          };
         default:
           return invalidTransition(state, event);
       }
     case "payment-pending":
       switch (event.type) {
         case "reconcile-unpaid":
-          return { ...state, reconciledUnpaid: true };
+          return {
+            kind: "payment-pending",
+            orderId: state.orderId,
+            mode: state.mode,
+            paymentId: state.paymentId,
+            reconciledUnpaid: true,
+          };
         case "observe-payment":
           if (state.reconciledUnpaid) return invalidTransition(state, event);
-          return { ...state, kind: "paid", originalPaymentReceiptId: event.receiptId };
+          return {
+            kind: "paid",
+            orderId: state.orderId,
+            mode: state.mode,
+            originalPaymentReceiptId: event.receiptId,
+          };
         case "expire-unpaid":
           if (!state.reconciledUnpaid) {
             throw new Error(`Cannot expire payment-pending order before reconciliation for event ${event.type}: ${JSON.stringify(event)}`);
           }
-          return { ...state, kind: "unpaid-expired" };
+          return { kind: "unpaid-expired", orderId: state.orderId, mode: state.mode };
         default:
           return invalidTransition(state, event);
       }
     case "paid":
       switch (event.type) {
         case "accept-delivery":
-          return { ...state, kind: "accepted", deliveryId: event.deliveryId };
+          return {
+            kind: "accepted",
+            orderId: state.orderId,
+            mode: state.mode,
+            deliveryId: event.deliveryId,
+          };
         case "finalize-invalid-delivery":
-          return { ...state, kind: "warranty-paid" };
+          return {
+            kind: "warranty-paid",
+            orderId: state.orderId,
+            mode: state.mode,
+            originalPaymentReceiptId: state.originalPaymentReceiptId,
+          };
         default:
           return invalidTransition(state, event);
       }
