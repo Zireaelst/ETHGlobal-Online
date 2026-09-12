@@ -1,0 +1,16 @@
+{
+  "mode": "simulation",
+  "query": { "kind": "standardized-pools", "blockNumber": 16, "poolLimit": 2 },
+  "witness": {
+    "network": "eip155:1",
+    "address": "0x1111111111111111111111111111111111111111",
+    "slots": ["0x0"],
+    "block": "0x10"
+  },
+  "policy": {
+    "maxPaymentAtomic": "1000",
+    "allowedPaymentNetworks": ["hedera:testnet"],
+    "resourceUrl": "https://resource.example/data",
+    "deadlineMs": 30000
+  }
+}

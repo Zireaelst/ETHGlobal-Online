@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "declaration": true, "emitDeclarationOnly": true, "noEmit": false, "outDir": "dist", "rootDir": "src" },
+  "include": ["src/index.ts", "src/graph.ts", "src/payment.ts", "src/simulation.ts", "src/witness.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}
