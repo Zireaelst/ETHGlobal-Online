@@ -1,0 +1,131 @@
+import { timingSafeEqual } from "node:crypto";
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { randomUUID } from "node:crypto";
+import { BlockTermsError, type SafeError } from "@blockterms/contracts";
+import type { BlockTermsClient } from "@blockterms/sdk";
+
+export interface ApiServerOptions {
+  client: BlockTermsClient;
+  token?: string;
+  bodyLimitBytes?: number;
+}
+
+class HttpProblem extends Error {
+  constructor(readonly status: number, message: string) {
+    super(message);
+  }
+}
+
+function statusFor(error: BlockTermsError): number {
+  return {
+    VALIDATION_ERROR: 400,
+    NOT_FOUND: 404,
+    CONFLICT: 409,
+    CONFIGURATION_REQUIRED: 424,
+    POLICY_REJECTED: 403,
+    UPSTREAM_ERROR: 502,
+    INTERNAL_ERROR: 500,
+  }[error.code];
+}
+
+function send(response: ServerResponse, status: number, value: unknown, headers: Record<string, string> = {}): void {
+  const body = `${JSON.stringify(value)}\n`;
+  response.writeHead(status, {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": String(Buffer.byteLength(body)),
+    "cache-control": "no-store",
+    ...headers,
+  });
+  response.end(body);
+}
+
+function authorized(header: string | undefined, expected: string): boolean {
+  const supplied = header?.startsWith("Bearer ") ? header.slice(7) : "";
+  const suppliedBytes = Buffer.from(supplied);
+  const expectedBytes = Buffer.from(expected);
+  return suppliedBytes.length === expectedBytes.length && timingSafeEqual(suppliedBytes, expectedBytes);
+}
+
+async function readJson(request: IncomingMessage, limit: number): Promise<unknown> {
+  if (!request.headers["content-type"]?.toLowerCase().startsWith("application/json")) {
+    throw new HttpProblem(415, "Requests with a body must use application/json.");
+  }
+  const declaredLength = Number(request.headers["content-length"] ?? 0);
+  if (Number.isFinite(declaredLength) && declaredLength > limit) throw new HttpProblem(413, "Request body is too large.");
+  const chunks: Buffer[] = [];
+  let size = 0;
+  let oversized = false;
+  for await (const chunk of request) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    size += buffer.length;
+    if (size > limit) oversized = true;
+    else chunks.push(buffer);
+  }
+  if (oversized) throw new HttpProblem(413, "Request body is too large.");
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  } catch {
+    throw new HttpProblem(400, "Request body is not valid JSON.");
+  }
+}
+
+function domainBody(error: BlockTermsError): { error: SafeError } {
+  return { error: error.toSafeError() };
+}
+
+export function createApiServer(options: ApiServerOptions): Server {
+  const bodyLimit = options.bodyLimitBytes ?? 64 * 1024;
+  return createServer(async (request, response) => {
+    const requestId = randomUUID();
+    response.setHeader("x-request-id", requestId);
+    try {
+      const method = request.method ?? "GET";
+      const url = new URL(request.url ?? "/", "http://localhost");
+      if (url.pathname.startsWith("/v1") && options.token && !authorized(request.headers.authorization, options.token)) {
+        send(response, 401, domainBody(new BlockTermsError("POLICY_REJECTED", "A valid bearer token is required.")), {
+          "www-authenticate": "Bearer",
+        });
+        return;
+      }
+      if (url.pathname === "/health") {
+        if (method !== "GET") return send(response, 405, domainBody(new BlockTermsError("VALIDATION_ERROR", "Method not allowed.")), { allow: "GET" });
+        return send(response, 200, await options.client.health());
+      }
+      if (url.pathname === "/v1/capabilities") {
+        if (method !== "GET") return send(response, 405, domainBody(new BlockTermsError("VALIDATION_ERROR", "Method not allowed.")), { allow: "GET" });
+        return send(response, 200, await options.client.capabilities());
+      }
+      if (url.pathname === "/v1/orders") {
+        if (method === "POST") return send(response, 201, await options.client.submit(await readJson(request, bodyLimit) as never));
+        if (method === "GET") {
+          const limitValue = url.searchParams.get("limit");
+          const limit = limitValue === null ? undefined : Number(limitValue);
+          return send(response, 200, await options.client.listOrders(limit === undefined ? {} : { limit }));
+        }
+        return send(response, 405, domainBody(new BlockTermsError("VALIDATION_ERROR", "Method not allowed.")), { allow: "GET, POST" });
+      }
+      const match = url.pathname.match(/^\/v1\/orders\/([^/]+)(?:\/(run|status|result))?$/);
+      if (match) {
+        const id = decodeURIComponent(match[1] ?? "");
+        const action = match[2];
+        if (!action && method === "GET") return send(response, 200, await options.client.getOrder(id));
+        if (action === "run" && method === "POST") return send(response, 200, await options.client.run(id));
+        if (action === "status" && method === "GET") return send(response, 200, await options.client.getStatus(id));
+        if (action === "result" && method === "GET") return send(response, 200, await options.client.getResult(id));
+        const allow = action === "run" ? "POST" : "GET";
+        return send(response, 405, domainBody(new BlockTermsError("VALIDATION_ERROR", "Method not allowed.")), { allow });
+      }
+      send(response, 404, domainBody(new BlockTermsError("NOT_FOUND", "Endpoint was not found.")));
+    } catch (error) {
+      if (error instanceof HttpProblem) {
+        send(response, error.status, domainBody(new BlockTermsError("VALIDATION_ERROR", error.message)));
+        return;
+      }
+      if (error instanceof BlockTermsError) {
+        send(response, statusFor(error), domainBody(error));
+        return;
+      }
+      send(response, 500, domainBody(new BlockTermsError("INTERNAL_ERROR", "Internal server error.")));
+    }
+  });
+}

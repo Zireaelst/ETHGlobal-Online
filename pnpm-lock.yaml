@@ -189,6 +189,28 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
+  services/api:
+    dependencies:
+      '@blockterms/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@blockterms/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+    devDependencies:
+      '@types/node':
+        specifier: 22.20.2
+        version: 22.20.2
+      tsup:
+        specifier: 8.5.1
+        version: 8.5.1(postcss@8.5.28)(tsx@4.20.6)(typescript@7.0.2)
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 5.0.0
+        version: 5.0.0(@types/node@22.20.2)(jsdom@30.0.1)(vite@8.3.0(@types/node@22.20.2)(esbuild@0.27.7)(terser@5.51.2)(tsx@4.20.6))
+
   spikes/blocky-capability:
     dependencies:
       zod:

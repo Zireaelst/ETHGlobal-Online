@@ -1,0 +1,23 @@
+{
+  "name": "@blockterms/api",
+  "version": "0.1.0",
+  "type": "module",
+  "files": ["dist"],
+  "bin": { "blockterms-api": "./dist/cli.js" },
+  "exports": { ".": { "types": "./dist/server.d.ts", "import": "./dist/server.js" } },
+  "scripts": {
+    "build": "tsup src/server.ts src/cli.ts --format esm --clean && tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@blockterms/contracts": "workspace:*",
+    "@blockterms/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.2",
+    "tsup": "8.5.1",
+    "typescript": "7.0.2",
+    "vitest": "5.0.0"
+  }
+}
