@@ -1,0 +1,28 @@
+{
+  "name": "@blockterms/mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "files": ["dist"],
+  "bin": { "blockterms-mcp": "./dist/index.js" },
+  "scripts": {
+    "build": "tsup",
+    "test": "pnpm build && vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@blockterms/contracts": "workspace:*",
+    "@blockterms/sdk": "workspace:*",
+    "@modelcontextprotocol/server": "2.0.0",
+    "@x402/core": "2.25.0",
+    "@x402/fetch": "2.25.0",
+    "@x402/hedera": "2.25.0",
+    "zod": "4.6.1"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@types/node": "22.20.2",
+    "tsup": "8.5.1",
+    "typescript": "7.0.2",
+    "vitest": "5.0.0"
+  }
+}
