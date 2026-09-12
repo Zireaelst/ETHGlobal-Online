@@ -13,7 +13,7 @@ function containsSecretKey(value: unknown): boolean {
 }
 
 export const ProtocolStateSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("quoted"), orderId: z.string().uuid(), mode: z.enum(["simulation", "live"]) }),
+  z.object({ kind: z.literal("quoted"), orderId: z.string().uuid(), mode: z.enum(["simulation", "live"]).optional() }),
   z.object({ kind: z.literal("reserved"), orderId: z.string().uuid(), mode: z.enum(["simulation", "live"]) }),
   z.object({ kind: z.literal("payment-pending"), orderId: z.string().uuid(), mode: z.enum(["simulation", "live"]), paymentId: z.string().min(1), reconciledUnpaid: z.boolean() }),
   z.object({ kind: z.literal("paid"), orderId: z.string().uuid(), mode: z.enum(["simulation", "live"]), originalPaymentReceiptId: z.string().min(1) }),

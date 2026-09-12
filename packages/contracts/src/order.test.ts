@@ -31,6 +31,18 @@ const queued = {
 } as const;
 
 describe("parseOrderRecord", () => {
+  it("accepts a queued auto order before an execution mode is selected", () => {
+    const { selectedMode: _selectedMode, ...withoutSelection } = queued;
+    const value = {
+      ...withoutSelection,
+      requestedMode: "auto",
+      request: { ...queued.request, mode: "auto" },
+      protocolState: { kind: "quoted", orderId: queued.id },
+    };
+
+    expect(parseOrderRecord(value).selectedMode).toBeUndefined();
+  });
+
   it("accepts a queued record", () => {
     expect(parseOrderRecord(queued)).toEqual(queued);
   });
