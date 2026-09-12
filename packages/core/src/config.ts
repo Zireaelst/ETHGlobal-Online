@@ -23,6 +23,7 @@ export interface RuntimeConfig {
   hederaPrivateKey?: string;
   hederaExpectedPayee?: string;
   hederaExpectedAsset?: string;
+  hederaNetwork: "hedera:testnet" | "hedera:mainnet";
   blockySupportedUrl: string;
 }
 
@@ -50,10 +51,18 @@ export function readRuntimeConfig(environment: Record<string, string | undefined
   const hederaPrivateKey = value(environment, "HEDERA_PRIVATE_KEY");
   const hederaExpectedPayee = value(environment, "HEDERA_EXPECTED_PAYEE");
   const hederaExpectedAsset = value(environment, "HEDERA_EXPECTED_ASSET");
+  const configuredNetwork = value(environment, "HEDERA_NETWORK");
+  if (configuredNetwork && configuredNetwork !== "hedera:testnet" && configuredNetwork !== "hedera:mainnet") {
+    throw new BlockTermsError("VALIDATION_ERROR", "HEDERA_NETWORK must be hedera:testnet or hedera:mainnet.");
+  }
+  const hederaNetwork: "hedera:testnet" | "hedera:mainnet" = configuredNetwork === "hedera:mainnet"
+    ? "hedera:mainnet"
+    : "hedera:testnet";
   return {
     graphLabelA: value(environment, "GRAPH_LABEL_A") ?? "deployment-a",
     graphLabelB: value(environment, "GRAPH_LABEL_B") ?? "deployment-b",
     blockySupportedUrl: value(environment, "BLOCKY_SUPPORTED_URL") ?? "https://api.testnet.blocky402.com/supported",
+    hederaNetwork,
     ...(graphEndpointA ? { graphEndpointA } : {}),
     ...(graphEndpointB ? { graphEndpointB } : {}),
     ...(graphAuthorization ? { graphAuthorization } : {}),
