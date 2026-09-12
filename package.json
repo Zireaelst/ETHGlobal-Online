@@ -15,6 +15,7 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "check:evidence": "node scripts/check-no-fake-evidence.mjs",
+    "check:agent-docs": "node scripts/check-agent-docs.mjs",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:evidence && pnpm build"
   },
   "devDependencies": {

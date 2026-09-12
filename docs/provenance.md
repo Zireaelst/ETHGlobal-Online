@@ -16,7 +16,14 @@ The supplied prompt includes this remote video URL:
 
 If used, it must remain recorded here. The final release must confirm permitted use or replace it with an owned asset. No other CloudFront asset URL is authorized by the prompt.
 
+## Agent runtime dependencies
+
+- `@x402/core`, `@x402/fetch`, and `@x402/hedera` version 2.25.0, from the official x402 Foundation TypeScript packages under the Apache-2.0 license. They implement x402 parsing, paid fetch retry, and the exact Hedera client scheme used in `packages/integrations/src/payment.ts`.
+- `@modelcontextprotocol/server` and `@modelcontextprotocol/client` version 2.0.0, from the official Model Context Protocol TypeScript SDK under the MIT license. They implement the MCP stdio server and its end-to-end client test.
+- `zod` 4.6.1, `commander` 15.0.0, and `tsup` 8.5.1 provide runtime schemas, CLI parsing, and package bundling.
+
+Project-specific code wraps these libraries with bounded request schemas, policy selection, secret-safe errors, durable state and simulation labeling. No SDK example was copied into the product source.
+
 ## Future additions
 
 Every starter, copied contract, SDK example, font file, icon, media asset and generated scaffold must be recorded with source URL, license if known, imported commit/version, files affected and the project-specific modifications.
-
