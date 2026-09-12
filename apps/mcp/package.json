@@ -4,8 +4,9 @@
   "type": "module",
   "files": ["dist"],
   "bin": { "blockterms-mcp": "./dist/index.js" },
+  "exports": { ".": { "types": "./dist/server.d.ts", "import": "./dist/server.js" } },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && tsc -p tsconfig.build.json",
     "test": "pnpm build && vitest run",
     "typecheck": "tsc --noEmit"
   },
