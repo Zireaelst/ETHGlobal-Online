@@ -5,6 +5,11 @@
   "engines": { "node": ">=22.13.1" },
   "scripts": {
     "build": "pnpm --filter @blockterms/web build",
+    "agent:build": "pnpm -r --filter @blockterms/contracts --filter @blockterms/core --filter @blockterms/integrations --filter @blockterms/sdk --filter @blockterms/api --filter blockterms --filter @blockterms/mcp build",
+    "agent:e2e": "pnpm agent:build && node scripts/e2e-agent-interfaces.mjs",
+    "agent:serve": "pnpm --filter @blockterms/api build && node services/api/dist/cli.js",
+    "agent:cli": "pnpm --filter blockterms build && node apps/cli/dist/index.js",
+    "agent:mcp": "pnpm --filter @blockterms/mcp build && node apps/mcp/dist/index.js",
     "dev": "pnpm --filter @blockterms/web dev",
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
