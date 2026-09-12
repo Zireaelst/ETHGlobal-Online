@@ -7,6 +7,7 @@
     "exactOptionalPropertyTypes": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "customConditions": ["development"],
     "resolveJsonModule": true,
     "isolatedModules": true,
     "skipLibCheck": true

@@ -2,8 +2,10 @@
   "name": "@blockterms/core",
   "version": "0.1.0",
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "files": ["dist"],
+  "exports": { ".": { "development": "./src/index.ts", "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
   "scripts": {
+    "build": "tsup src/index.ts --format esm --clean && tsc -p tsconfig.build.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
@@ -13,6 +15,7 @@
   },
   "devDependencies": {
     "@types/node": "22.20.2",
+    "tsup": "8.5.1",
     "typescript": "7.0.2",
     "vitest": "5.0.0"
   }

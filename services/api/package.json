@@ -4,7 +4,7 @@
   "type": "module",
   "files": ["dist"],
   "bin": { "blockterms-api": "./dist/cli.js" },
-  "exports": { ".": { "types": "./dist/server.d.ts", "import": "./dist/server.js" } },
+  "exports": { ".": { "development": "./src/server.ts", "types": "./dist/server.d.ts", "import": "./dist/server.js" } },
   "scripts": {
     "build": "tsup src/server.ts src/cli.ts --format esm --clean && tsc -p tsconfig.build.json",
     "test": "vitest run",
