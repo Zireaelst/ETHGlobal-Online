@@ -4,7 +4,7 @@
   "packageManager": "pnpm@10.12.1",
   "engines": { "node": ">=22.13.1" },
   "scripts": {
-    "build": "pnpm --filter @blockterms/web build",
+    "build": "pnpm -r --if-present build",
     "agent:build": "pnpm -r --filter @blockterms/contracts --filter @blockterms/core --filter @blockterms/integrations --filter @blockterms/sdk --filter @blockterms/api --filter blockterms --filter @blockterms/mcp build",
     "agent:e2e": "pnpm agent:build && node scripts/e2e-agent-interfaces.mjs",
     "agent:serve": "pnpm --filter @blockterms/api build && node services/api/dist/cli.js",
@@ -16,7 +16,7 @@
     "test": "pnpm -r --if-present test",
     "check:evidence": "node scripts/check-no-fake-evidence.mjs",
     "check:agent-docs": "node scripts/check-agent-docs.mjs",
-    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:evidence && pnpm build"
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:evidence && pnpm check:agent-docs && pnpm build && pnpm agent:e2e"
   },
   "devDependencies": {
     "@types/node": "22.20.2",
