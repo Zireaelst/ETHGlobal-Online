@@ -100,10 +100,10 @@ export class BlockTermsService {
       }));
     }
 
-    const executionAdapters = selection.selectedMode === "live"
+    const configuredAdapters = selection.selectedMode === "live"
       ? this.options.adapters.live
       : this.options.adapters.simulation;
-    if (!executionAdapters) {
+    if (!configuredAdapters) {
       const configurationError = new BlockTermsError(
         "CONFIGURATION_REQUIRED",
         "Live adapters are not configured.",
@@ -117,6 +117,7 @@ export class BlockTermsService {
         events: [...record.events, this.event("execution.configuration_required", { missing: ["LIVE_ADAPTERS"] })],
       }));
     }
+    const executionAdapters = typeof configuredAdapters === "function" ? configuredAdapters() : configuredAdapters;
 
     current = await this.options.repository.update(id, current.revision, (record) => {
       const { error: _error, result: _result, ...base } = record;

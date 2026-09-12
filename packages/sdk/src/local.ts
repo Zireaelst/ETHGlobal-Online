@@ -20,9 +20,9 @@ export interface LocalClientOptions {
 
 export function createLocalClient(options: LocalClientOptions): BlockTermsClient {
   const config = readRuntimeConfig(options.environment ?? process.env);
-  let live: ExecutionAdapters | undefined;
+  let live: (() => ExecutionAdapters) | undefined;
   if (inspectLiveConfiguration(config).liveReady) {
-    live = {
+    live = () => ({
       graph: new GraphStandardizedAdapter({
         deployments: [
           { endpoint: config.graphEndpointA as string, label: config.graphLabelA },
@@ -38,7 +38,7 @@ export function createLocalClient(options: LocalClientOptions): BlockTermsClient
         expectedAsset: config.hederaExpectedAsset as string,
         network: config.hederaNetwork,
       }),
-    };
+    });
   }
   const service = new BlockTermsService({
     repository: new JsonFileOrderRepository(options.storePath),

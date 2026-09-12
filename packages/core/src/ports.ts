@@ -30,5 +30,5 @@ export interface ExecutionAdapters {
 
 export interface AdapterSet {
   simulation: ExecutionAdapters;
-  live?: ExecutionAdapters;
+  live?: ExecutionAdapters | (() => ExecutionAdapters);
 }
