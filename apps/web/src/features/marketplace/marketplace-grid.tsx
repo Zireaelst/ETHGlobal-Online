@@ -22,7 +22,7 @@ export function MarketplaceGrid({ products }: { products: DataProduct[] }) {
       <div className="market-grid">
         {visible.map((product) => (
           <article className="product-card" key={product.id}>
-            <div className="product-card__top"><span>{product.manifest.kind}</span><span>{product.provider.type}</span></div>
+            <div className="product-card__top"><span>{product.manifest.kind}</span><span>{product.manifest.access?.visibility === "credential-gated" ? "private · credentialed" : product.provider.type}</span></div>
             <h2>{product.manifest.name}</h2><p>{product.manifest.summary}</p>
             <dl><div><dt>Provider</dt><dd>{product.provider.displayName}</dd></div><div><dt>Freshness</dt><dd>≤ {product.manifest.freshnessSeconds}s</dd></div><div><dt>Coverage</dt><dd>{product.manifest.commercial.collateralCoverageBps / 100}%</dd></div><div><dt>Price</dt><dd>{product.manifest.commercial.priceAtomic} atomic</dd></div></dl>
             <Link href={`/marketplace/${product.manifest.slug}`}>Inspect product passport <span aria-hidden="true">↗</span></Link>

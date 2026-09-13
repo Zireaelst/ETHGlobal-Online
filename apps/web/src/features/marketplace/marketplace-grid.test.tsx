@@ -27,4 +27,13 @@ describe("marketplace experience", () => {
       "/demo?product=treasury-decision-bundle",
     );
   });
+
+  it("shows buyer credential gates as access conditions rather than correctness claims", () => {
+    const gated = marketplaceProducts.find((product) => product.manifest.access?.visibility === "credential-gated");
+    if (!gated) throw new Error("credential-gated fixture missing");
+    render(<ProductPassport product={gated} />);
+    expect(screen.getByText(/credential-gated private data/i)).toBeVisible();
+    expect(screen.getByText(/organization.*kyb.example/i)).toBeVisible();
+    expect(screen.getByText(/does not prove the purchased data is correct/i)).toBeVisible();
+  });
 });

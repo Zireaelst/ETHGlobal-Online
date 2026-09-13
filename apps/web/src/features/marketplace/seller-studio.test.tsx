@@ -12,6 +12,8 @@ describe("SellerStudio", () => {
     expect(screen.getByText(/sandbox delivery/i)).toBeVisible();
     expect(screen.getByText(/credential.*does not prove/i)).toBeVisible();
     fireEvent.change(screen.getByLabelText("Provider type"), { target: { value: "agent" } });
+    fireEvent.change(screen.getByLabelText("Buyer access"), { target: { value: "credential-gated" } });
+    expect(screen.getByLabelText("Required credential")).toBeVisible();
     fireEvent.change(screen.getByLabelText("Product name"), { target: { value: "Treasury Snapshot" } });
     fireEvent.click(screen.getByRole("button", { name: "Export draft manifest" }));
     expect(createObjectURL).toHaveBeenCalled();

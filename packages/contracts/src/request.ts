@@ -3,6 +3,18 @@ import { z } from "zod";
 const hexAddress = /^0x[0-9a-fA-F]{40}$/;
 const hexQuantity = /^0x(?:0|[1-9a-fA-F][0-9a-fA-F]*)$/;
 const positiveInteger = /^[1-9][0-9]*$/;
+const credentialKind = z.enum(["zk-tls", "wallet-control", "organization", "custom"]);
+
+export const CredentialAccessGrantSchema = z.object({
+  kind: credentialKind,
+  issuer: z.string().trim().min(1).max(100),
+  subject: z.string().trim().min(1).max(120),
+  verificationId: z.string().trim().min(1).max(200),
+  verifiedAt: z.iso.datetime({ offset: true }),
+  expiresAt: z.iso.datetime({ offset: true }),
+}).strict().refine((value) => Date.parse(value.expiresAt) > Date.parse(value.verifiedAt), {
+  message: "Access grant expiry must be after verification time.",
+});
 
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 
@@ -50,6 +62,7 @@ export const SubmitRequestSchema = z.object({
     productId: z.string().uuid(),
     productVersion: z.string().regex(/^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/),
     providerId: z.string().regex(/^[a-z0-9][a-z0-9-]{2,63}$/),
+    accessGrants: z.array(CredentialAccessGrantSchema).max(5).optional(),
   }).strict().optional(),
   metadata: metadataSchema.optional(),
 }).strict().superRefine((value, context) => {
@@ -62,6 +75,7 @@ export const SubmitRequestSchema = z.object({
 });
 
 export type SubmitRequest = z.infer<typeof SubmitRequestSchema>;
+export type CredentialAccessGrant = z.infer<typeof CredentialAccessGrantSchema>;
 
 export function parseSubmitRequest(value: unknown): SubmitRequest {
   const parsed = SubmitRequestSchema.safeParse(value);

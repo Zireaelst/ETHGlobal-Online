@@ -30,6 +30,24 @@ export const CredentialAttestationSchema = z.object({
   message: "Credential expiry must be after issue time.",
 });
 
+export const CredentialRequirementSchema = z.object({
+  kind: z.enum(["zk-tls", "wallet-control", "organization", "custom"]),
+  issuer: z.string().trim().min(1).max(100).optional(),
+  subject: z.string().trim().min(1).max(120).optional(),
+}).strict();
+
+export const ProductAccessPolicySchema = z.object({
+  visibility: z.enum(["public", "credential-gated"]),
+  requiredCredentials: z.array(CredentialRequirementSchema).max(5),
+}).strict().superRefine((value, context) => {
+  if (value.visibility === "public" && value.requiredCredentials.length > 0) {
+    context.addIssue({ code: "custom", path: ["requiredCredentials"], message: "Public products cannot require buyer credentials." });
+  }
+  if (value.visibility === "credential-gated" && value.requiredCredentials.length === 0) {
+    context.addIssue({ code: "custom", path: ["requiredCredentials"], message: "Credential-gated products require at least one buyer credential." });
+  }
+});
+
 export const BundleCompositionSchema = z.object({
   method: z.literal("same-block-union"),
   components: z.array(z.object({
@@ -73,6 +91,7 @@ export const DataProductManifestSchema = z.object({
     digest: z.string().regex(digest),
     uri: z.string().refine((value) => value.startsWith("ipfs://") || value.startsWith("https://"), "Sample URI must use IPFS or HTTPS."),
   }).strict(),
+  access: ProductAccessPolicySchema.optional(),
   credentials: z.array(CredentialAttestationSchema).max(10).default([]),
 }).strict().superRefine((value, context) => {
   if (new Set(value.tags).size !== value.tags.length) context.addIssue({ code: "custom", path: ["tags"], message: "Tags must be unique." });
@@ -173,6 +192,8 @@ export const RecordProductOutcomeRequestSchema = z.object({
 
 export type ProviderIdentity = z.infer<typeof ProviderIdentitySchema>;
 export type CredentialAttestation = z.infer<typeof CredentialAttestationSchema>;
+export type CredentialRequirement = z.infer<typeof CredentialRequirementSchema>;
+export type ProductAccessPolicy = z.infer<typeof ProductAccessPolicySchema>;
 export type BundleComposition = z.infer<typeof BundleCompositionSchema>;
 export type DataProductManifest = z.infer<typeof DataProductManifestSchema>;
 export type SubmitProductRequest = z.infer<typeof SubmitProductRequestSchema>;

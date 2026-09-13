@@ -74,5 +74,9 @@ describe("marketplace audit integrations", () => {
     expect(fetch).toHaveBeenCalledWith("https://verifier.example/check", expect.objectContaining({
       method: "POST", headers: expect.objectContaining({ authorization: "Bearer held-inside-adapter" }),
     }));
+    await expect(verifier.validate({
+      kind: "organization", issuer: "kyb.example", subject: "accredited-research", verificationId: "verify-17",
+      verifiedAt: "2026-09-13T07:00:00.000Z", expiresAt: "2026-10-13T08:00:00.000Z",
+    })).resolves.toBe(true);
   });
 });

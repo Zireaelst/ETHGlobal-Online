@@ -30,6 +30,7 @@ export const marketplaceProducts: DataProduct[] = [
     provider: { id: "provider-beacon", type: "organization", displayName: "Beacon Research" },
     manifest: {
       ...base.manifest, slug: "risk-signal-brief", name: "Risk Signal Brief", summary: "A bounded report that joins standardized liquidity observations with declared risk indicators.", kind: "report", freshnessSeconds: 120, deliverySeconds: 45,
+      access: { visibility: "credential-gated", requiredCredentials: [{ kind: "organization", issuer: "kyb.example", subject: "accredited-research" }] },
       commercial: { priceAtomic: "1800000", paymentNetwork: "hedera:testnet", asset: "HBAR", resourceUrl: "https://example.invalid/x402/risk", warrantyAtomic: "1800000", collateralCoverageBps: 10000 },
       sample: { digest: digest("b"), uri: "ipfs://example-risk-record" },
     },

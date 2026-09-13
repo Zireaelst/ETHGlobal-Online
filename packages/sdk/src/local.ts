@@ -12,6 +12,7 @@ import {
   EvmWitnessAdapter,
   GraphStandardizedAdapter,
   HederaX402Adapter,
+  HttpMarketplaceCredentialVerifier,
 } from "@blockterms/integrations";
 import { BlockTermsClient } from "./client";
 
@@ -22,7 +23,8 @@ export interface LocalClientOptions {
 }
 
 export function createLocalClient(options: LocalClientOptions): BlockTermsClient {
-  const config = readRuntimeConfig(options.environment ?? process.env);
+  const environment = options.environment ?? process.env;
+  const config = readRuntimeConfig(environment);
   let live: (() => ExecutionAdapters) | undefined;
   if (inspectLiveConfiguration(config).liveReady) {
     live = () => ({
@@ -46,11 +48,18 @@ export function createLocalClient(options: LocalClientOptions): BlockTermsClient
   const marketplace = new MarketplaceService({
     repository: new JsonFileMarketplaceRepository(options.marketplaceStorePath ?? `${options.storePath}.marketplace.json`),
   });
+  const credentialAccess = environment.CREDENTIAL_VERIFIER_URL
+    ? new HttpMarketplaceCredentialVerifier({
+        endpoint: environment.CREDENTIAL_VERIFIER_URL,
+        ...(environment.CREDENTIAL_VERIFIER_TOKEN ? { apiToken: environment.CREDENTIAL_VERIFIER_TOKEN } : {}),
+      })
+    : undefined;
   const service = new BlockTermsService({
     repository: new JsonFileOrderRepository(options.storePath),
     adapters: { simulation: createSimulationAdapters(), ...(live ? { live } : {}) },
     config,
     marketplace,
+    ...(credentialAccess ? { credentialAccess } : {}),
   });
   return new BlockTermsClient({
     submit: (input) => service.submit(input),

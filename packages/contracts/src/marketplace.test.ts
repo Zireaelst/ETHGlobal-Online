@@ -81,4 +81,17 @@ describe("marketplace contracts", () => {
     expect(parseProductFilter({ query: "liquidity", providerType: "agent", maxPriceAtomic: "3000000", credentialKind: "zk-tls" })).toMatchObject({ query: "liquidity" });
     expect(() => parseProductFilter({ maxPriceAtomic: "-1" })).toThrow(/positive/i);
   });
+
+  it("declares credential-gated buyer access without storing credential payloads", () => {
+    const access = {
+      visibility: "credential-gated" as const,
+      requiredCredentials: [{ kind: "organization" as const, issuer: "kyb.example", subject: "accredited-research" }],
+    };
+    const parsed = parseSubmitProductRequest({
+      ...validProductRequest,
+      manifest: { ...validProductRequest.manifest, access },
+    });
+    expect(parsed.manifest.access).toEqual(access);
+    expect(JSON.stringify(parsed)).not.toMatch(/credentialPayload|rawProof/i);
+  });
 });

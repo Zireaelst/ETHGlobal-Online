@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import {
   BlockTermsError,
   CredentialAttestationSchema,
+  type CredentialAccessGrant,
   type CredentialAttestation,
 } from "@blockterms/contracts";
 import { Client, PrivateKey, TopicMessageSubmitTransaction } from "@hiero-ledger/sdk";
@@ -46,6 +47,7 @@ export interface CredentialVerification {
 export interface MarketplaceCredentialVerifier {
   status(): IntegrationStatus;
   verify(attestation: CredentialAttestation): Promise<CredentialVerification>;
+  validate(grant: CredentialAccessGrant): Promise<boolean>;
 }
 
 function canonicalize(value: unknown, seen = new Set<object>()): string {
@@ -188,6 +190,21 @@ export class HttpMarketplaceCredentialVerifier implements MarketplaceCredentialV
 
   async verify(input: CredentialAttestation): Promise<CredentialVerification> {
     const attestation = CredentialAttestationSchema.parse(input);
+    const parsed = await this.request("blockterms.marketplace.credential-check.v1", { attestation });
+    return {
+      valid: parsed.valid,
+      verificationId: parsed.verificationId,
+      verifiedAt: this.clock().toISOString(),
+      ...(parsed.reason ? { reason: parsed.reason } : {}),
+    };
+  }
+
+  async validate(grant: CredentialAccessGrant): Promise<boolean> {
+    const parsed = await this.request("blockterms.marketplace.grant-check.v1", { grant });
+    return parsed.valid && parsed.verificationId === grant.verificationId;
+  }
+
+  private async request(schema: string, payload: object): Promise<z.infer<typeof VerificationResponseSchema>> {
     let response: Response;
     try {
       response = await this.fetch(this.options.endpoint, {
@@ -196,7 +213,7 @@ export class HttpMarketplaceCredentialVerifier implements MarketplaceCredentialV
           "content-type": "application/json",
           ...(this.options.apiToken ? { authorization: `Bearer ${this.options.apiToken}` } : {}),
         },
-        body: JSON.stringify({ schema: "blockterms.marketplace.credential-check.v1", attestation }),
+        body: JSON.stringify({ schema, ...payload }),
       });
     } catch {
       throw new BlockTermsError("UPSTREAM_ERROR", "Credential verifier request failed.");
@@ -208,11 +225,6 @@ export class HttpMarketplaceCredentialVerifier implements MarketplaceCredentialV
     } catch {
       throw new BlockTermsError("UPSTREAM_ERROR", "Credential verifier returned an invalid response.");
     }
-    return {
-      valid: parsed.valid,
-      verificationId: parsed.verificationId,
-      verifiedAt: this.clock().toISOString(),
-      ...(parsed.reason ? { reason: parsed.reason } : {}),
-    };
+    return parsed;
   }
 }
