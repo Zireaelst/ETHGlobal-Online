@@ -33,6 +33,11 @@ pnpm agent:cli -- market submit --file examples/marketplace/product.json
 pnpm agent:cli -- market list --network eip155:1 --max-price 5000000
 pnpm agent:cli -- market get same-block-liquidity
 pnpm agent:cli -- providers list
+pnpm agent:cli -- products list --query liquidity
+pnpm agent:cli -- quotes create --file examples/requests/simulation.json
+pnpm agent:cli -- orders purchase ORDER_ID
+pnpm agent:cli -- orders status ORDER_ID
+pnpm agent:cli -- orders result ORDER_ID
 ```
 
 After the `blockterms` package is published, the equivalent entry is `npx blockterms`. Successful commands write one JSON value to stdout. Diagnostics use stderr. Exit codes are 2 validation, 3 configuration required, 4 not found, 5 conflict, 6 policy rejected, 7 upstream failure, and 1 internal failure.
@@ -85,7 +90,9 @@ Start the server with `pnpm agent:mcp`. A host configuration can use:
 }
 ```
 
-The server exposes `submit_request`, `run_order`, `get_order`, `get_status`, `get_result`, `list_orders`, and `get_capabilities`, plus `search_data_products`, `get_data_product`, `submit_data_product`, `review_data_product`, `create_data_bundle`, `list_data_providers`, and `get_data_provider`. Results include MCP structured content and a compact text block. stdout is reserved for protocol messages.
+The lifecycle aliases are `blockterms_list_products`, `blockterms_get_product`, `blockterms_create_quote`, `blockterms_purchase`, `blockterms_get_order`, and `blockterms_get_result`. The server also preserves `submit_request`, `run_order`, `get_order`, `get_status`, `get_result`, `list_orders`, and `get_capabilities`, plus `search_data_products`, `get_data_product`, `submit_data_product`, `review_data_product`, `create_data_bundle`, `list_data_providers`, and `get_data_provider`. Results include MCP structured content and a compact text block. stdout is reserved for protocol messages.
+
+See [Connect agents](connect-agents.md) for exact Claude Code, Codex, OpenCode, generic stdio, CLI, REST, and SDK setup.
 
 ## Request shape
 

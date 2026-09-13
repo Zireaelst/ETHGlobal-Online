@@ -17,7 +17,7 @@ pnpm install --frozen-lockfile
 pnpm agent:e2e
 pnpm agent:cli -- example --mode simulation
 pnpm agent:cli -- submit --file examples/requests/simulation.json --run
-pnpm agent:cli -- market list
+pnpm agent:cli -- products list
 ```
 
 The final command prints one JSON order. Local state defaults to `.blockterms/orders.json`; override it with `BLOCKTERMS_STORE_PATH`.
@@ -30,7 +30,7 @@ curl http://127.0.0.1:8787/health
 curl http://127.0.0.1:8787/v1/capabilities
 ```
 
-Use `pnpm agent:mcp` as the MCP stdio command. See [agent interfaces](docs/agent-interfaces.md) for the SDK, CLI, HTTP, and MCP contracts and [runtime architecture](docs/architecture/agent-runtime.md) for persistence and live-mode behavior.
+Use `pnpm agent:mcp` as the MCP stdio command. See [connect agents](docs/connect-agents.md) for Claude Code, Codex, OpenCode, SDK, CLI, REST, and generic MCP setup; [agent interfaces](docs/agent-interfaces.md) for the contracts; and [runtime architecture](docs/architecture/agent-runtime.md) for persistence and live-mode behavior.
 
 ## Target sponsor tracks
 
@@ -42,14 +42,15 @@ This is a new project. Continuity tracks are outside scope.
 
 ## Product surfaces
 
-- `/` — single-viewport marketing landing page on desktop
+- `/` — flowing public product landing page
+- `/app` — operational product overview
+- `/app/marketplace` and `/app/marketplace/[slug]` — catalog and versioned passports
+- `/app/orders/new`, `/app/orders`, and `/app/orders/[id]` — human quote, purchase, status, and result flow
+- `/app/providers` and `/app/providers/[id]` — provider discovery and performance
+- `/app/sell` — seller listing studio
+- `/app/agent-console` — connection guide for Claude Code, Codex, OpenCode, SDK, REST, CLI, and MCP
 - `/how-it-works` — request, payment, delivery, verification, warranty
 - `/proofs` — proof scope and trust boundaries
-- `/providers` — provider collateral and service publication
-- `/marketplace` — curated product discovery and composable bundles
-- `/marketplace/[slug]` — versioned product passport and purchase handoff
-- `/sell` — human and agent draft-listing studio
-- `/demo` — buyer-agent product console
 - `/docs` — developer onboarding and protocol documentation
 - `/product` — product scope and current release boundary
 - `/developers` — implementation entry points and integration status
@@ -62,6 +63,7 @@ This is a new project. Continuity tracks are outside scope.
 - [Trust model](docs/architecture/trust-model.md)
 - [Agent runtime architecture](docs/architecture/agent-runtime.md)
 - [SDK, API, CLI, and MCP guide](docs/agent-interfaces.md)
+- [Claude Code, Codex, OpenCode, and MCP connection guide](docs/connect-agents.md)
 - [Verified marketplace guide](docs/marketplace.md)
 - [Vercel deployment approach](docs/deployment/vercel.md)
 - [MotionSites adaptation prompt](docs/prompts/motionsites-blockterms.md)
