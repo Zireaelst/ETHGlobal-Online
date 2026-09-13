@@ -14,6 +14,9 @@ describe("ConnectionGuide", () => {
     expect(container).toHaveTextContent("search_data_products");
     expect(container).toHaveTextContent("stdio");
     expect(container).toHaveTextContent("Simulation");
+    for (const client of ["Claude Code", "Codex", "OpenCode"]) {
+      expect(screen.getByRole("img", { name: `${client} logo` })).toBeInTheDocument();
+    }
   });
 
   it("switches interface recipes without pretending to run local processes", () => {

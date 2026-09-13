@@ -1,9 +1,9 @@
 export type Recipe = Readonly<{ id: string; label: string; eyebrow: string; summary: string; code: string; note: string }>;
 
 export const agentClients = [
-  { name: "Claude Code", mark: "C", command: "claude mcp add --scope project blockterms -- node \"$PWD/apps/mcp/dist/index.js\"", check: "claude mcp list" },
-  { name: "Codex", mark: "X", command: "codex mcp add blockterms -- node \"$PWD/apps/mcp/dist/index.js\"", check: "codex mcp list" },
-  { name: "OpenCode", mark: "O", command: "opencode mcp add blockterms -- node \"$PWD/apps/mcp/dist/index.js\"", check: "opencode mcp list" },
+  { name: "Claude Code", logo: "/agent-clients/claude-code.png", command: "claude mcp add --scope project blockterms -- node \"$PWD/apps/mcp/dist/index.js\"", check: "claude mcp list" },
+  { name: "Codex", logo: "/agent-clients/codex.webp", command: "codex mcp add blockterms -- node \"$PWD/apps/mcp/dist/index.js\"", check: "codex mcp list" },
+  { name: "OpenCode", logo: "/agent-clients/opencode.png", command: "opencode mcp add blockterms -- node \"$PWD/apps/mcp/dist/index.js\"", check: "opencode mcp list" },
 ] as const;
 
 export const interfaceRecipes: Recipe[] = [
