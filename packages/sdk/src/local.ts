@@ -43,13 +43,14 @@ export function createLocalClient(options: LocalClientOptions): BlockTermsClient
       }),
     });
   }
+  const marketplace = new MarketplaceService({
+    repository: new JsonFileMarketplaceRepository(options.marketplaceStorePath ?? `${options.storePath}.marketplace.json`),
+  });
   const service = new BlockTermsService({
     repository: new JsonFileOrderRepository(options.storePath),
     adapters: { simulation: createSimulationAdapters(), ...(live ? { live } : {}) },
     config,
-  });
-  const marketplace = new MarketplaceService({
-    repository: new JsonFileMarketplaceRepository(options.marketplaceStorePath ?? `${options.storePath}.marketplace.json`),
+    marketplace,
   });
   return new BlockTermsClient({
     submit: (input) => service.submit(input),

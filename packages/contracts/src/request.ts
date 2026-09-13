@@ -46,6 +46,11 @@ export const SubmitRequestSchema = z.object({
     resourceUrl: z.url().refine((value) => value.startsWith("http://") || value.startsWith("https://"), "Resource URL must use HTTP or HTTPS."),
     deadlineMs: z.number().int().min(1_000).max(300_000),
   }).strict(),
+  marketplace: z.object({
+    productId: z.string().uuid(),
+    productVersion: z.string().regex(/^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/),
+    providerId: z.string().regex(/^[a-z0-9][a-z0-9-]{2,63}$/),
+  }).strict().optional(),
   metadata: metadataSchema.optional(),
 }).strict().superRefine((value, context) => {
   if (new Set(value.witness.slots.map((slot) => slot.toLowerCase())).size !== value.witness.slots.length) {

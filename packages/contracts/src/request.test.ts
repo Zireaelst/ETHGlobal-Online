@@ -50,4 +50,10 @@ describe("parseSubmitRequest", () => {
   it("rejects values that cannot be represented as JSON", () => {
     expect(() => parseSubmitRequest({ ...validRequest, metadata: { invalid: BigInt(1) } })).toThrow("JSON");
   });
+
+  it("pins a marketplace product version and provider", () => {
+    const marketplace = { productId: "00000000-0000-4000-8000-000000000101", productVersion: "1.0.0", providerId: "provider-atlas" };
+    expect(parseSubmitRequest({ ...validRequest, marketplace })).toMatchObject({ marketplace });
+    expect(() => parseSubmitRequest({ ...validRequest, marketplace: { ...marketplace, productId: "not-a-uuid" } })).toThrow(/UUID|uuid/i);
+  });
 });
