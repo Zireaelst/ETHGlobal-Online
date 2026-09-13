@@ -121,5 +121,41 @@ export function createBlockTermsMcpServer(client: BlockTermsClient): McpServer {
     inputSchema: z.object({ providerId: z.string().min(3).max(64) }),
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, ({ providerId }) => execute(async () => await client.getProvider(providerId)));
+  server.registerTool("blockterms_list_products", {
+    title: "List BlockTerms products",
+    description: "Discover active versioned products. Lifecycle-oriented alias for search_data_products.",
+    inputSchema: z.object({ filter: ProductFilterSchema.optional() }),
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, ({ filter }) => execute(async () => ({ products: await client.listProducts(filter ?? {}) })));
+  server.registerTool("blockterms_get_product", {
+    title: "Get BlockTerms product",
+    description: "Retrieve a versioned product passport by UUID or slug.",
+    inputSchema: z.object({ idOrSlug: z.string().min(1) }),
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, ({ idOrSlug }) => execute(async () => await client.getProduct(idOrSlug)));
+  server.registerTool("blockterms_create_quote", {
+    title: "Create BlockTerms quote",
+    description: "Validate and persist a version-pinned order request without executing payment.",
+    inputSchema: z.object({ request: SubmitRequestSchema }),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  }, ({ request }) => execute(async () => await client.submit(request)));
+  server.registerTool("blockterms_purchase", {
+    title: "Purchase BlockTerms order",
+    description: "Execute a previously created quote using its selected live or simulation adapters.",
+    inputSchema: orderIdSchema,
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  }, ({ orderId }) => execute(async () => await client.run(orderId)));
+  server.registerTool("blockterms_get_order", {
+    title: "Get BlockTerms order",
+    description: "Retrieve the persisted order record and lifecycle state.",
+    inputSchema: orderIdSchema,
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, ({ orderId }) => execute(async () => await client.getOrder(orderId)));
+  server.registerTool("blockterms_get_result", {
+    title: "Get BlockTerms result",
+    description: "Retrieve the structured result for a completed order.",
+    inputSchema: orderIdSchema,
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, ({ orderId }) => execute(async () => await client.getResult(orderId)));
   return server;
 }

@@ -48,11 +48,11 @@ describe("blockterms CLI", () => {
 
   it("retrieves status and result across processes", async () => {
     const store = await temporaryStore();
-    const submitted = JSON.parse((await run(["submit", "--file", fixture], store)).stdout) as { id: string };
-    expect((await run(["run", submitted.id], store)).code).toBe(0);
+    const submitted = JSON.parse((await run(["quotes", "create", "--file", fixture], store)).stdout) as { id: string };
+    expect((await run(["orders", "purchase", submitted.id], store)).code).toBe(0);
 
-    expect(JSON.parse((await run(["status", submitted.id], store)).stdout)).toMatchObject({ phase: "completed" });
-    expect(JSON.parse((await run(["result", submitted.id], store)).stdout)).toMatchObject({ mode: "simulation" });
+    expect(JSON.parse((await run(["orders", "status", submitted.id], store)).stdout)).toMatchObject({ phase: "completed" });
+    expect(JSON.parse((await run(["orders", "result", submitted.id], store)).stdout)).toMatchObject({ mode: "simulation" });
   });
 
   it("uses stable exits for invalid JSON and missing orders", async () => {
@@ -86,7 +86,8 @@ describe("blockterms CLI", () => {
     const reviewFile = join(directory, "review.json");
     await writeFile(reviewFile, JSON.stringify({ decision: "approve", curatorId: "curator-blockterms", reason: "Sandbox passed.", sandbox: { passed: true, checkedAt: "2026-09-13T08:00:00.000Z", sampleDigest: digest } }), "utf8");
     expect((await run(["market", "review", draft.id, "--file", reviewFile], store)).code).toBe(0);
-    expect(JSON.parse((await run(["market", "list", "--query", "atlas"], store)).stdout)).toHaveLength(1);
+    expect(JSON.parse((await run(["products", "list", "--query", "atlas"], store)).stdout)).toHaveLength(1);
+    expect(JSON.parse((await run(["products", "get", "same-block-liquidity"], store)).stdout)).toMatchObject({ state: "active" });
     expect(JSON.parse((await run(["providers", "get", "provider-atlas"], store)).stdout)).toMatchObject({ provider: { type: "agent" } });
   });
 });

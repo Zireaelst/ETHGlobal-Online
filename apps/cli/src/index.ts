@@ -91,23 +91,36 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
     .showHelpAfterError()
     .exitOverride();
 
+  async function submitFromFile(file: string, runImmediately = false) {
+    let parsed: unknown;
+    try { parsed = JSON.parse(await readRequestSource(file)); }
+    catch { throw new BlockTermsError("VALIDATION_ERROR", "Request file is not valid JSON."); }
+    const runtime = client(program.opts<GlobalOptions>());
+    const submitted = await runtime.submit(parsed as SubmitRequest);
+    const value = runImmediately ? await runtime.run(submitted.id) : submitted;
+    writeJson(process.stdout, value); recordExit(value);
+  }
+
+  type ProductListOptions = { query?: string; providerType?: string; network?: string; kind?: string; maxPrice?: string; includeInactive?: boolean; limit: string };
+  async function listProducts(options: ProductListOptions) {
+    writeJson(process.stdout, await client(program.opts<GlobalOptions>()).listProducts({
+      ...(options.query ? { query: options.query } : {}),
+      ...(options.providerType ? { providerType: options.providerType as "human" | "agent" | "organization" } : {}),
+      ...(options.network ? { network: options.network } : {}),
+      ...(options.kind ? { kind: options.kind as "snapshot" | "stream" | "report" | "bundle" } : {}),
+      ...(options.maxPrice ? { maxPriceAtomic: options.maxPrice } : {}),
+      includeInactive: Boolean(options.includeInactive), limit: Number(options.limit),
+    }));
+  }
+
+  function configureProductList(command: Command) {
+    return command.option("--query <text>", "search product or provider text").option("--provider-type <type>", "human, agent, or organization").option("--network <caip2>", "required CAIP-2 network").option("--kind <kind>", "snapshot, stream, report, or bundle").option("--max-price <atomic>", "maximum atomic-unit price").option("--include-inactive", "include non-active products").option("--limit <count>", "maximum records", "50").action(listProducts);
+  }
+
   program.command("submit")
     .requiredOption("--file <path>", "request JSON file, or - for stdin")
     .option("--run", "execute immediately after submission")
-    .action(async (commandOptions: { file: string; run?: boolean }) => {
-      let parsed: unknown;
-      try {
-        const source = await readRequestSource(commandOptions.file);
-        parsed = JSON.parse(source);
-      } catch {
-        throw new BlockTermsError("VALIDATION_ERROR", "Request file is not valid JSON.");
-      }
-      const runtime = client(program.opts<GlobalOptions>());
-      const submitted = await runtime.submit(parsed as SubmitRequest);
-      const result = commandOptions.run ? await runtime.run(submitted.id) : submitted;
-      writeJson(process.stdout, result);
-      recordExit(result);
-    });
+    .action(async (commandOptions: { file: string; run?: boolean }) => submitFromFile(commandOptions.file, commandOptions.run));
 
   program.command("run <order-id>").action(async (orderId: string) => {
     const result = await client(program.opts<GlobalOptions>()).run(orderId);
@@ -140,24 +153,7 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
   });
 
   const market = program.command("market").description("Discover and manage verified data products");
-  market.command("list")
-    .option("--query <text>", "search product or provider text")
-    .option("--provider-type <type>", "human, agent, or organization")
-    .option("--network <caip2>", "required CAIP-2 network")
-    .option("--kind <kind>", "snapshot, stream, report, or bundle")
-    .option("--max-price <atomic>", "maximum atomic-unit price")
-    .option("--include-inactive", "include non-active products")
-    .option("--limit <count>", "maximum records", "50")
-    .action(async (options: { query?: string; providerType?: string; network?: string; kind?: string; maxPrice?: string; includeInactive?: boolean; limit: string }) => {
-      writeJson(process.stdout, await client(program.opts<GlobalOptions>()).listProducts({
-        ...(options.query ? { query: options.query } : {}),
-        ...(options.providerType ? { providerType: options.providerType as "human" | "agent" | "organization" } : {}),
-        ...(options.network ? { network: options.network } : {}),
-        ...(options.kind ? { kind: options.kind as "snapshot" | "stream" | "report" | "bundle" } : {}),
-        ...(options.maxPrice ? { maxPriceAtomic: options.maxPrice } : {}),
-        includeInactive: Boolean(options.includeInactive), limit: Number(options.limit),
-      }));
-    });
+  configureProductList(market.command("list"));
   market.command("get <id-or-slug>").action(async (idOrSlug: string) => {
     writeJson(process.stdout, await client(program.opts<GlobalOptions>()).getProduct(idOrSlug));
   });
@@ -170,6 +166,19 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
   market.command("bundle").requiredOption("--file <path>", "bundle JSON file, or - for stdin").action(async (options: { file: string }) => {
     writeJson(process.stdout, await client(program.opts<GlobalOptions>()).createBundle(await readJsonFile(options.file, "Bundle") as CreateBundleRequest));
   });
+
+  const products = program.command("products").description("Discover verified data products");
+  configureProductList(products.command("list"));
+  products.command("get <id-or-slug>").action(async (idOrSlug: string) => { writeJson(process.stdout, await client(program.opts<GlobalOptions>()).getProduct(idOrSlug)); });
+
+  const quotes = program.command("quotes").description("Create version-pinned order quotes");
+  quotes.command("create").requiredOption("--file <path>", "request JSON file, or - for stdin").action(async (options: { file: string }) => submitFromFile(options.file));
+
+  const orders = program.command("orders").description("Purchase and inspect data orders");
+  orders.command("purchase <order-id>").action(async (orderId: string) => { const value = await client(program.opts<GlobalOptions>()).run(orderId); writeJson(process.stdout, value); recordExit(value); });
+  orders.command("get <order-id>").action(async (orderId: string) => { writeJson(process.stdout, await client(program.opts<GlobalOptions>()).getOrder(orderId)); });
+  orders.command("status <order-id>").action(async (orderId: string) => { writeJson(process.stdout, await client(program.opts<GlobalOptions>()).getStatus(orderId)); });
+  orders.command("result <order-id>").action(async (orderId: string) => { writeJson(process.stdout, await client(program.opts<GlobalOptions>()).getResult(orderId)); });
 
   const providers = program.command("providers").description("Inspect verified data providers");
   providers.command("list").action(async () => {

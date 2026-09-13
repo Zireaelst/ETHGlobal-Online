@@ -100,7 +100,7 @@ try {
   const mcp = new Client({ name: "blockterms-market-e2e", version: "0.1.0" });
   await mcp.connect(transport);
   try {
-    const discovery = await mcp.callTool({ name: "search_data_products", arguments: { filter: { network: "eip155:1", maxPriceAtomic: "5000000" } } });
+    const discovery = await mcp.callTool({ name: "blockterms_list_products", arguments: { filter: { network: "eip155:1", maxPriceAtomic: "5000000" } } });
     assert.equal(discovery.structuredContent.products.length, 3);
 
     const purchaseRequest = structuredClone(orderFixture);
@@ -130,7 +130,7 @@ try {
     await mcp.close();
   }
 
-  const cliGet = await executeFile(process.execPath, [resolve(workspace, "apps/cli/dist/index.js"), "market", "get", "treasury-decision-bundle"], { cwd: workspace, env: environment });
+  const cliGet = await executeFile(process.execPath, [resolve(workspace, "apps/cli/dist/index.js"), "products", "get", "treasury-decision-bundle"], { cwd: workspace, env: environment });
   assert.equal(JSON.parse(cliGet.stdout).id, activeBundle.id);
 
   process.stdout.write(`${JSON.stringify({

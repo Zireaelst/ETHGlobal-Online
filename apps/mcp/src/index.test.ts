@@ -43,6 +43,7 @@ describe("BlockTerms MCP server", () => {
     try {
       const tools = await client.listTools();
       expect(tools.tools.map((tool) => tool.name).sort()).toEqual([
+        "blockterms_create_quote", "blockterms_get_order", "blockterms_get_product", "blockterms_get_result", "blockterms_list_products", "blockterms_purchase",
         "create_data_bundle", "get_capabilities", "get_data_product", "get_data_provider", "get_order", "get_result", "get_status",
         "list_data_providers", "list_orders", "review_data_product", "run_order", "search_data_products", "submit_data_product", "submit_request",
       ]);
@@ -52,6 +53,8 @@ describe("BlockTerms MCP server", () => {
       await client.callTool({ name: "review_data_product", arguments: { productId, review: { decision: "approve", curatorId: "curator-blockterms", reason: "Sandbox passed.", sandbox: { passed: true, checkedAt: "2026-09-13T08:00:00.000Z", sampleDigest: digest } } } });
       const discovered = await client.callTool({ name: "search_data_products", arguments: { filter: { query: "atlas" } } });
       expect(discovered.structuredContent).toMatchObject({ products: [{ state: "active" }] });
+      const aliasedDiscovery = await client.callTool({ name: "blockterms_list_products", arguments: { filter: { query: "atlas" } } });
+      expect(aliasedDiscovery.structuredContent).toMatchObject({ products: [{ state: "active" }] });
 
       const submitted = await client.callTool({ name: "submit_request", arguments: { request } });
       expect(submitted.isError).not.toBe(true);
