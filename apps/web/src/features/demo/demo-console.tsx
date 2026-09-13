@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button, StatusBadge } from "@blockterms/ui";
+import type { DataProduct } from "@blockterms/contracts";
 import { EvidencePanel } from "./evidence-panel";
 import { HumanApproval } from "./human-approval";
 import { OrderTimeline } from "./order-timeline";
@@ -9,12 +10,22 @@ import { scenarioCopy, scenarioStates, type ScenarioKey } from "./scenarios";
 
 const scenarios = Object.keys(scenarioCopy) as ScenarioKey[];
 
-export function DemoConsole() {
+export function DemoConsole({ selectedProduct }: { selectedProduct?: DataProduct }) {
   const [scenario, setScenario] = useState<ScenarioKey>("valid");
   const state = scenarioStates[scenario];
 
   function exportSimulation() {
-    const payload = JSON.stringify({ mode: "simulation", scenario, state: state.kind, evidence: "educational-only" }, null, 2);
+    const payload = JSON.stringify({
+      mode: "simulation",
+      scenario,
+      state: state.kind,
+      evidence: "educational-only",
+      ...(selectedProduct ? { marketplace: {
+        productId: selectedProduct.id,
+        productVersion: selectedProduct.manifest.version,
+        providerId: selectedProduct.provider.id,
+      } } : {}),
+    }, null, 2);
     const url = URL.createObjectURL(new Blob([payload], { type: "application/json" }));
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -33,6 +44,12 @@ export function DemoConsole() {
           <label>Proof coverage<input readOnly value="Known account + selected storage fields" /></label>
           <label>Maximum spend<input readOnly value="Within example policy" /></label>
           <label>Delivery deadline<input readOnly value="Bounded by signed quote" /></label>
+          {selectedProduct ? <>
+            <p className="selection-note">Marketplace selection pinned · example terms only</p>
+            <label>Product ID<input readOnly value={selectedProduct.id} /></label>
+            <label>Provider and version<input readOnly value={`${selectedProduct.provider.id} · v${selectedProduct.manifest.version}`} /></label>
+            <label className="request-field-wide">Bound resource URL<input readOnly value={selectedProduct.manifest.commercial.resourceUrl} /></label>
+          </> : null}
         </div>
       </section>
       <section className="scenario-card">

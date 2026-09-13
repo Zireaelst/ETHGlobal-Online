@@ -22,5 +22,9 @@ describe("marketplace experience", () => {
     expect(screen.getByText(/separate collateral transfer/i)).toBeVisible();
     expect(screen.getByText(/eligibility signal/i)).toBeVisible();
     expect(screen.getByText(/same-block-union/i)).toBeVisible();
+    expect(screen.getByRole("link", { name: /prepare example purchase/i })).toHaveAttribute(
+      "href",
+      "/demo?product=treasury-decision-bundle",
+    );
   });
 });

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { DemoConsole } from "./demo-console";
+import { marketplaceProducts } from "../marketplace/catalog";
 
 describe("DemoConsole", () => {
   it("keeps simulation labeling visible and omits transaction/explorer claims", () => {
@@ -36,5 +37,15 @@ describe("DemoConsole", () => {
   it("keeps proof exclusions visible in evidence", () => {
     render(<DemoConsole />);
     expect(screen.getByText(/does not prove full-query completeness/i)).toBeInTheDocument();
+  });
+
+  it("pins marketplace identity and commercial terms in the request preview", () => {
+    const product = marketplaceProducts[0];
+    if (!product) throw new Error("marketplace fixture missing");
+    render(<DemoConsole selectedProduct={product} />);
+    expect(screen.getByText(/marketplace selection pinned/i)).toBeVisible();
+    expect(screen.getByDisplayValue(product.id)).toBeVisible();
+    expect(screen.getByDisplayValue(`${product.provider.id} · v${product.manifest.version}`)).toBeVisible();
+    expect(screen.getByDisplayValue(product.manifest.commercial.resourceUrl)).toBeVisible();
   });
 });

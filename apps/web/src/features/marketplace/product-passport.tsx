@@ -1,4 +1,5 @@
 import type { DataProduct } from "@blockterms/contracts";
+import Link from "next/link";
 
 export function ProductPassport({ product }: { product: DataProduct }) {
   return (
@@ -16,6 +17,9 @@ export function ProductPassport({ product }: { product: DataProduct }) {
           <div><dt>Proof profile</dt><dd>{product.manifest.verification.profile}</dd></div>
           <div><dt>Sample digest</dt><dd className="mono-value">{product.manifest.sample.digest}</dd></div>
         </dl>
+        <Link className="passport-purchase" href={`/demo?product=${product.manifest.slug}`}>
+          Prepare example purchase <span aria-hidden="true">→</span>
+        </Link>
       </section>
       <aside className="passport-aside">
         <section><span className="eyebrow">Warranty boundary</span><h2>Payment stays final.</h2><p>An invalid or late provider-bound delivery can authorize a separate collateral transfer. The purchase is not reversed.</p></section>
