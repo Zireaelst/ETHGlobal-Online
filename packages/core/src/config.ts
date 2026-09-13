@@ -42,6 +42,23 @@ function value(environment: Record<string, string | undefined>, name: string): s
   return candidate ? candidate : undefined;
 }
 
+function assertHttpUrl(candidate: string | undefined, name: string): void {
+  if (!candidate) return;
+  try {
+    const url = new URL(candidate);
+    if (url.protocol === "http:" || url.protocol === "https:") return;
+  } catch {
+    // Report only the field name so a credential accidentally pasted here is never reflected.
+  }
+  throw new BlockTermsError("VALIDATION_ERROR", `${name} must be an HTTP(S) URL.`);
+}
+
+function assertHederaId(candidate: string | undefined, name: string, kind: "account" | "token" = "account"): void {
+  if (candidate && !/^\d+\.\d+\.\d+$/.test(candidate)) {
+    throw new BlockTermsError("VALIDATION_ERROR", `${name} must be a Hedera ${kind} ID.`);
+  }
+}
+
 export function readRuntimeConfig(environment: Record<string, string | undefined> = process.env): RuntimeConfig {
   const graphEndpointA = value(environment, "GRAPH_ENDPOINT_A");
   const graphEndpointB = value(environment, "GRAPH_ENDPOINT_B");
@@ -55,6 +72,12 @@ export function readRuntimeConfig(environment: Record<string, string | undefined
   if (configuredNetwork && configuredNetwork !== "hedera:testnet" && configuredNetwork !== "hedera:mainnet") {
     throw new BlockTermsError("VALIDATION_ERROR", "HEDERA_NETWORK must be hedera:testnet or hedera:mainnet.");
   }
+  assertHttpUrl(graphEndpointA, "GRAPH_ENDPOINT_A");
+  assertHttpUrl(graphEndpointB, "GRAPH_ENDPOINT_B");
+  assertHttpUrl(sourceRpcUrl, "SOURCE_RPC_URL");
+  assertHederaId(hederaAccountId, "HEDERA_ACCOUNT_ID");
+  assertHederaId(hederaExpectedPayee, "HEDERA_EXPECTED_PAYEE");
+  assertHederaId(hederaExpectedAsset, "HEDERA_EXPECTED_ASSET", "token");
   const hederaNetwork: "hedera:testnet" | "hedera:mainnet" = configuredNetwork === "hedera:mainnet"
     ? "hedera:mainnet"
     : "hedera:testnet";

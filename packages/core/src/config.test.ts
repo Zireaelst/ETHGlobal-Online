@@ -72,4 +72,13 @@ describe("runtime configuration", () => {
     expect(config.graphAuthorization).toBe("Bearer very-secret");
     expect(JSON.stringify(inspectLiveConfiguration(config))).not.toContain("very-secret");
   });
+
+  it("rejects malformed live endpoint and Hedera policy identifiers", () => {
+    expect(() => readRuntimeConfig({ ...completeEnvironment, GRAPH_ENDPOINT_A: "not-a-url" }))
+      .toThrow("GRAPH_ENDPOINT_A must be an HTTP(S) URL.");
+    expect(() => readRuntimeConfig({ ...completeEnvironment, HEDERA_EXPECTED_PAYEE: "private-key-material" }))
+      .toThrow("HEDERA_EXPECTED_PAYEE must be a Hedera account ID.");
+    expect(() => readRuntimeConfig({ ...completeEnvironment, HEDERA_EXPECTED_ASSET: "HBAR" }))
+      .toThrow("HEDERA_EXPECTED_ASSET must be a Hedera token ID.");
+  });
 });
