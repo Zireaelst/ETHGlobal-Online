@@ -13,7 +13,7 @@ async function run(args: string[], storePath: string) {
   return new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve, reject) => {
     const child = spawn(process.execPath, [executable, ...args], {
       cwd: packageRoot,
-      env: { ...process.env, BLOCKTERMS_STORE_PATH: storePath, BLOCKTERMS_MARKETPLACE_STORE_PATH: `${storePath}.marketplace.json` },
+      env: { ...process.env, BLOCKTERMS_STORE_PATH: storePath, BLOCKTERMS_MARKETPLACE_STORE_PATH: `${storePath}.catalog.json` },
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";

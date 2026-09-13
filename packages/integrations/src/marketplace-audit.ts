@@ -5,7 +5,6 @@ import {
   type CredentialAccessGrant,
   type CredentialAttestation,
 } from "@blockterms/contracts";
-import { Client, PrivateKey, TopicMessageSubmitTransaction } from "@hiero-ledger/sdk";
 import { z } from "zod";
 
 const forbiddenKey = /authorization|private.?key|mnemonic|secret|api.?token|password/i;
@@ -124,6 +123,7 @@ export class HederaHcsMarketplaceAuditAnchor implements MarketplaceAuditAnchor {
         missing: ["HEDERA_ACCOUNT_ID", "HEDERA_PRIVATE_KEY"],
       });
     }
+    const { Client, PrivateKey, TopicMessageSubmitTransaction } = await import("@hiero-ledger/sdk");
     const client = this.options.network === "hedera:mainnet" ? Client.forMainnet() : Client.forTestnet();
     client.setOperator(this.options.accountId, PrivateKey.fromString(this.options.privateKey));
     try {

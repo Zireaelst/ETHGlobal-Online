@@ -41,7 +41,8 @@ function client(options: GlobalOptions): BlockTermsClient {
     const token = options.token ?? process.env.BLOCKTERMS_API_TOKEN;
     return createHttpClient({ baseUrl: apiUrl, ...(token ? { token } : {}) });
   }
-  return createLocalClient({ storePath: options.store });
+  const marketplaceStorePath = process.env.BLOCKTERMS_MARKETPLACE_STORE_PATH;
+  return createLocalClient({ storePath: options.store, ...(marketplaceStorePath ? { marketplaceStorePath } : {}) });
 }
 
 function recordExit(record: OrderRecord): void {
