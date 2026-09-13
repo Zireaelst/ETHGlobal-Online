@@ -180,6 +180,7 @@ export type CreateBundleRequest = z.infer<typeof CreateBundleRequestSchema>;
 export type ReviewProductRequest = z.infer<typeof ReviewProductRequestSchema>;
 export type DataProduct = z.infer<typeof DataProductSchema>;
 export type ProductFilter = z.infer<typeof ProductFilterSchema>;
+export type ProviderMetrics = z.infer<typeof ProviderMetricsSchema>;
 export type ProviderProfile = z.infer<typeof ProviderProfileSchema>;
 export type RecordProductOutcomeRequest = z.infer<typeof RecordProductOutcomeRequestSchema>;
 
