@@ -1,7 +1,14 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
 import { Command, CommanderError } from "commander";
-import { BlockTermsError, type OrderRecord, type SubmitRequest } from "@blockterms/contracts";
+import {
+  BlockTermsError,
+  type CreateBundleRequest,
+  type OrderRecord,
+  type ReviewProductRequest,
+  type SubmitProductRequest,
+  type SubmitRequest,
+} from "@blockterms/contracts";
 import { createHttpClient, type BlockTermsClient } from "@blockterms/sdk";
 import { createLocalClient } from "@blockterms/sdk/local";
 import { createApiServer } from "@blockterms/api";
@@ -21,6 +28,11 @@ async function readRequestSource(path: string): Promise<string> {
   const chunks: Buffer[] = [];
   for await (const chunk of process.stdin) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
   return Buffer.concat(chunks).toString("utf8");
+}
+
+async function readJsonFile(path: string, label: string): Promise<unknown> {
+  try { return JSON.parse(await readRequestSource(path)); }
+  catch { throw new BlockTermsError("VALIDATION_ERROR", `${label} file is not valid JSON.`); }
 }
 
 function client(options: GlobalOptions): BlockTermsClient {
@@ -125,12 +137,53 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
     }
     writeJson(process.stdout, exampleRequest(options.mode as SubmitRequest["mode"]));
   });
+
+  const market = program.command("market").description("Discover and manage verified data products");
+  market.command("list")
+    .option("--query <text>", "search product or provider text")
+    .option("--provider-type <type>", "human, agent, or organization")
+    .option("--network <caip2>", "required CAIP-2 network")
+    .option("--kind <kind>", "snapshot, stream, report, or bundle")
+    .option("--max-price <atomic>", "maximum atomic-unit price")
+    .option("--include-inactive", "include non-active products")
+    .option("--limit <count>", "maximum records", "50")
+    .action(async (options: { query?: string; providerType?: string; network?: string; kind?: string; maxPrice?: string; includeInactive?: boolean; limit: string }) => {
+      writeJson(process.stdout, await client(program.opts<GlobalOptions>()).listProducts({
+        ...(options.query ? { query: options.query } : {}),
+        ...(options.providerType ? { providerType: options.providerType as "human" | "agent" | "organization" } : {}),
+        ...(options.network ? { network: options.network } : {}),
+        ...(options.kind ? { kind: options.kind as "snapshot" | "stream" | "report" | "bundle" } : {}),
+        ...(options.maxPrice ? { maxPriceAtomic: options.maxPrice } : {}),
+        includeInactive: Boolean(options.includeInactive), limit: Number(options.limit),
+      }));
+    });
+  market.command("get <id-or-slug>").action(async (idOrSlug: string) => {
+    writeJson(process.stdout, await client(program.opts<GlobalOptions>()).getProduct(idOrSlug));
+  });
+  market.command("submit").requiredOption("--file <path>", "product JSON file, or - for stdin").action(async (options: { file: string }) => {
+    writeJson(process.stdout, await client(program.opts<GlobalOptions>()).submitProduct(await readJsonFile(options.file, "Product") as SubmitProductRequest));
+  });
+  market.command("review <product-id>").requiredOption("--file <path>", "review JSON file, or - for stdin").action(async (productId: string, options: { file: string }) => {
+    writeJson(process.stdout, await client(program.opts<GlobalOptions>()).reviewProduct(productId, await readJsonFile(options.file, "Review") as ReviewProductRequest));
+  });
+  market.command("bundle").requiredOption("--file <path>", "bundle JSON file, or - for stdin").action(async (options: { file: string }) => {
+    writeJson(process.stdout, await client(program.opts<GlobalOptions>()).createBundle(await readJsonFile(options.file, "Bundle") as CreateBundleRequest));
+  });
+
+  const providers = program.command("providers").description("Inspect verified data providers");
+  providers.command("list").action(async () => {
+    writeJson(process.stdout, await client(program.opts<GlobalOptions>()).listProviders());
+  });
+  providers.command("get <provider-id>").action(async (providerId: string) => {
+    writeJson(process.stdout, await client(program.opts<GlobalOptions>()).getProvider(providerId));
+  });
   program.command("serve")
     .option("--host <host>", "listen host", process.env.BLOCKTERMS_API_HOST ?? "127.0.0.1")
     .option("--port <port>", "listen port", process.env.BLOCKTERMS_API_PORT ?? "8787")
     .action(async (options: { host: string; port: string }) => {
       const globalOptions = program.opts<GlobalOptions>();
-      const runtime = createLocalClient({ storePath: globalOptions.store });
+      const marketplaceStorePath = process.env.BLOCKTERMS_MARKETPLACE_STORE_PATH;
+      const runtime = createLocalClient({ storePath: globalOptions.store, ...(marketplaceStorePath ? { marketplaceStorePath } : {}) });
       const token = globalOptions.token ?? process.env.BLOCKTERMS_API_TOKEN;
       const server = createApiServer({ client: runtime, ...(token ? { token } : {}) });
       const port = Number(options.port);
