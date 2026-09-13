@@ -73,6 +73,21 @@ function domainBody(error: BlockTermsError): { error: SafeError } {
   return { error: error.toSafeError() };
 }
 
+function marketplaceFilter(search: URLSearchParams): Record<string, unknown> {
+  const filter: Record<string, unknown> = {};
+  for (const key of ["query", "providerType", "schemaFamily", "network", "kind", "maxPriceAtomic", "credentialKind"] as const) {
+    const value = search.get(key);
+    if (value !== null) filter[key] = value;
+  }
+  for (const key of ["maxFreshnessSeconds", "minCollateralCoverageBps", "limit"] as const) {
+    const value = search.get(key);
+    if (value !== null) filter[key] = Number(value);
+  }
+  const includeInactive = search.get("includeInactive");
+  if (includeInactive !== null) filter.includeInactive = includeInactive === "true";
+  return filter;
+}
+
 export function createApiServer(options: ApiServerOptions): Server {
   const bodyLimit = options.bodyLimitBytes ?? 64 * 1024;
   return createServer(async (request, response) => {
@@ -103,6 +118,35 @@ export function createApiServer(options: ApiServerOptions): Server {
           return send(response, 200, await options.client.listOrders(limit === undefined ? {} : { limit }));
         }
         return send(response, 405, domainBody(new BlockTermsError("VALIDATION_ERROR", "Method not allowed.")), { allow: "GET, POST" });
+      }
+      if (url.pathname === "/v1/marketplace/products") {
+        if (method === "POST") return send(response, 201, await options.client.submitProduct(await readJson(request, bodyLimit) as never));
+        if (method === "GET") return send(response, 200, await options.client.listProducts(marketplaceFilter(url.searchParams)));
+        return send(response, 405, domainBody(new BlockTermsError("VALIDATION_ERROR", "Method not allowed.")), { allow: "GET, POST" });
+      }
+      if (url.pathname === "/v1/marketplace/bundles") {
+        if (method === "POST") return send(response, 201, await options.client.createBundle(await readJson(request, bodyLimit) as never));
+        return send(response, 405, domainBody(new BlockTermsError("VALIDATION_ERROR", "Method not allowed.")), { allow: "POST" });
+      }
+      if (url.pathname === "/v1/marketplace/providers") {
+        if (method === "GET") return send(response, 200, await options.client.listProviders());
+        return send(response, 405, domainBody(new BlockTermsError("VALIDATION_ERROR", "Method not allowed.")), { allow: "GET" });
+      }
+      if (url.pathname === "/v1/marketplace/outcomes") {
+        if (method === "POST") return send(response, 200, await options.client.recordOutcome(await readJson(request, bodyLimit) as never));
+        return send(response, 405, domainBody(new BlockTermsError("VALIDATION_ERROR", "Method not allowed.")), { allow: "POST" });
+      }
+      const marketplaceProduct = url.pathname.match(/^\/v1\/marketplace\/products\/([^/]+)(?:\/(review))?$/);
+      if (marketplaceProduct) {
+        const id = decodeURIComponent(marketplaceProduct[1] ?? "");
+        if (marketplaceProduct[2] === "review" && method === "POST") return send(response, 200, await options.client.reviewProduct(id, await readJson(request, bodyLimit) as never));
+        if (!marketplaceProduct[2] && method === "GET") return send(response, 200, await options.client.getProduct(id));
+        return send(response, 405, domainBody(new BlockTermsError("VALIDATION_ERROR", "Method not allowed.")), { allow: marketplaceProduct[2] ? "POST" : "GET" });
+      }
+      const marketplaceProvider = url.pathname.match(/^\/v1\/marketplace\/providers\/([^/]+)$/);
+      if (marketplaceProvider) {
+        if (method === "GET") return send(response, 200, await options.client.getProvider(decodeURIComponent(marketplaceProvider[1] ?? "")));
+        return send(response, 405, domainBody(new BlockTermsError("VALIDATION_ERROR", "Method not allowed.")), { allow: "GET" });
       }
       const match = url.pathname.match(/^\/v1\/orders\/([^/]+)(?:\/(run|status|result))?$/);
       if (match) {

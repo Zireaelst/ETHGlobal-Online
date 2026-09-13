@@ -5,7 +5,8 @@ import { createApiServer } from "./server";
 const host = process.env.BLOCKTERMS_API_HOST ?? "127.0.0.1";
 const port = Number(process.env.BLOCKTERMS_API_PORT ?? "8787");
 const storePath = process.env.BLOCKTERMS_STORE_PATH ?? ".blockterms/orders.json";
-const client = createLocalClient({ storePath });
+const marketplaceStorePath = process.env.BLOCKTERMS_MARKETPLACE_STORE_PATH ?? ".blockterms/marketplace.json";
+const client = createLocalClient({ storePath, marketplaceStorePath });
 const server = createApiServer({ client, ...(process.env.BLOCKTERMS_API_TOKEN ? { token: process.env.BLOCKTERMS_API_TOKEN } : {}) });
 
 server.listen(port, host, () => {

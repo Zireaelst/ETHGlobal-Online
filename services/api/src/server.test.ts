@@ -35,6 +35,16 @@ const request = {
   },
 };
 
+const productRequest = {
+  provider: { id: "provider-atlas", type: "agent", displayName: "Atlas Agent" },
+  manifest: {
+    slug: "same-block-liquidity", name: "Same-block liquidity", summary: "Comparable live DEX liquidity with bounded proof coverage.", version: "1.0.0", kind: "snapshot",
+    tags: ["defi"], schema: { family: "messari-dex-amm", version: "1.0.0" }, networks: ["eip155:1"], deployments: ["dex-a", "dex-b"], freshnessSeconds: 30, deliverySeconds: 20,
+    commercial: { priceAtomic: "100", paymentNetwork: "hedera:testnet", asset: "HBAR", resourceUrl: "https://atlas.example/data", warrantyAtomic: "120", collateralCoverageBps: 12000 },
+    verification: { profile: "graph-eip1186-v1", maxPools: 3, maxStorageSlots: 3 }, sample: { digest: `0x${"ab".repeat(32)}`, uri: "ipfs://bafy-example" }, credentials: [],
+  },
+};
+
 describe("BlockTerms HTTP API", () => {
   it("serves every agent runtime endpoint over real loopback HTTP", async () => {
     const baseUrl = await fixture();
@@ -96,5 +106,29 @@ describe("BlockTerms HTTP API", () => {
     expect(method.headers.get("allow")).toBe("GET");
     const server = servers.pop();
     await expect(new Promise<void>((resolve, reject) => server?.close((error) => error ? reject(error) : resolve()))).resolves.toBeUndefined();
+  });
+
+  it("serves the curated marketplace over real HTTP", async () => {
+    const baseUrl = await fixture({ token: "market-token" });
+    const headers = { authorization: "Bearer market-token", "content-type": "application/json" };
+    const submittedResponse = await fetch(`${baseUrl}/v1/marketplace/products`, { method: "POST", headers, body: JSON.stringify(productRequest) });
+    const draft = await submittedResponse.json() as { id: string; manifest: { slug: string } };
+    const reviewResponse = await fetch(`${baseUrl}/v1/marketplace/products/${draft.id}/review`, {
+      method: "POST", headers, body: JSON.stringify({
+        decision: "approve", curatorId: "curator-blockterms", reason: "Sandbox passed.",
+        sandbox: { passed: true, checkedAt: "2026-09-13T08:00:00.000Z", sampleDigest: productRequest.manifest.sample.digest },
+      }),
+    });
+    const listResponse = await fetch(`${baseUrl}/v1/marketplace/products?query=atlas&providerType=agent&limit=5`, { headers });
+    const getResponse = await fetch(`${baseUrl}/v1/marketplace/products/same-block-liquidity`, { headers });
+    const providersResponse = await fetch(`${baseUrl}/v1/marketplace/providers`, { headers });
+    const providerResponse = await fetch(`${baseUrl}/v1/marketplace/providers/provider-atlas`, { headers });
+
+    expect(submittedResponse.status).toBe(201);
+    expect(reviewResponse.status).toBe(200);
+    expect(await listResponse.json()).toHaveLength(1);
+    expect((await getResponse.json() as { state: string }).state).toBe("active");
+    expect(await providersResponse.json()).toHaveLength(1);
+    expect(await providerResponse.json()).toMatchObject({ provider: { id: "provider-atlas" } });
   });
 });
