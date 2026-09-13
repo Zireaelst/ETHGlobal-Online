@@ -11,6 +11,7 @@ describe("marketplace experience", () => {
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Atlas" } });
     expect(screen.getAllByRole("article")).toHaveLength(2);
     expect(screen.queryByText("Risk Signal Brief")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /Inspect product passport/i })[0]).toHaveAttribute("href", "/app/marketplace/same-block-liquidity");
   });
 
   it("shows proof, warranty, credential, lineage, and example boundaries", () => {
@@ -22,9 +23,9 @@ describe("marketplace experience", () => {
     expect(screen.getByText(/separate collateral transfer/i)).toBeVisible();
     expect(screen.getByText(/eligibility signal/i)).toBeVisible();
     expect(screen.getByText(/same-block-union/i)).toBeVisible();
-    expect(screen.getByRole("link", { name: /prepare example purchase/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /buy access/i })).toHaveAttribute(
       "href",
-      "/demo?product=treasury-decision-bundle",
+      "/app/orders/new?product=treasury-decision-bundle",
     );
   });
 

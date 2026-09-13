@@ -17,8 +17,8 @@ export function ProductPassport({ product }: { product: DataProduct }) {
           <div><dt>Proof profile</dt><dd>{product.manifest.verification.profile}</dd></div>
           <div><dt>Sample digest</dt><dd className="mono-value">{product.manifest.sample.digest}</dd></div>
         </dl>
-        <Link className="passport-purchase" href={`/demo?product=${product.manifest.slug}`}>
-          Prepare example purchase <span aria-hidden="true">→</span>
+        <Link className="passport-purchase" href={`/app/orders/new?product=${product.manifest.slug}`}>
+          Buy access <span aria-hidden="true">→</span>
         </Link>
       </section>
       <aside className="passport-aside">

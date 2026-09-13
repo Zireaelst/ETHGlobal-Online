@@ -389,6 +389,7 @@ img, svg, video { display: block; max-width: 100%; }
 .app-page-header > div { max-width: 720px; }
 .app-page-header h1 { font-size: clamp(2.15rem, 4vw, 4.5rem); letter-spacing: -.055em; line-height: .96; margin: 10px 0 15px; }
 .app-page-header p { color: #8b9690; font-size: .9rem; line-height: 1.65; margin: 0; max-width: 620px; }
+.app-backlink { color: #7c8680; display: inline-block; font-size: .7rem; margin-bottom: 28px; }
 .app-kicker { color: #b5ff53; font-size: .62rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
 .app-metrics { border: 1px solid #242a27; display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 22px; }
 .app-metrics article { background: #0c0f0e; display: grid; min-height: 150px; padding: 25px; }
@@ -415,6 +416,14 @@ img, svg, video { display: block; max-width: 100%; }
 .app-quickstart pre { background: #080a09; border: 1px solid #1c211f; border-radius: 8px; color: #c8ff5b; margin: 18px 0; overflow-x: auto; padding: 16px; }
 .app-quickstart .button { justify-self: start; }
 .app-mobile-header, .app-scrim { display: none; }
+.app-provider-grid { display: grid; gap: 16px; grid-template-columns: repeat(2, 1fr); }
+.app-provider-grid > a { background: #0c0f0e; border: 1px solid #242a27; min-height: 310px; padding: 30px; }
+.app-provider-grid > a > span { color: var(--accent); font-size: .59rem; letter-spacing: .12em; text-transform: uppercase; }
+.app-provider-grid h2 { font-size: 1.9rem; font-weight: 520; letter-spacing: -.04em; margin: 60px 0 24px; }
+.app-provider-grid dl { margin: 0 0 24px; }
+.app-provider-grid dl > div { border-top: 1px solid #222824; display: flex; font-size: .68rem; justify-content: space-between; padding: 9px 0; }
+.app-provider-grid dt { color: #707a74; }.app-provider-grid dd { margin: 0; }
+.app-provider-grid > a > strong { font-size: .7rem; }
 
 /* Landing product story */
 .landing-story { background: #070908; position: relative; z-index: 5; }
@@ -521,4 +530,5 @@ img, svg, video { display: block; max-width: 100%; }
   .activity-row { gap: 7px; grid-template-columns: 1fr auto; padding: 13px 0; }
   .activity-row strong { grid-column: 1 / -1; }
   .activity-row time { text-align: right; }
+  .app-provider-grid { grid-template-columns: 1fr; }
 }
