@@ -43,5 +43,4 @@ Interview agent SDK and risk-infrastructure teams about whether they will pay fo
 
 ## Non-goals
 
-BlockTerms is not an investment agent, exchange, general API marketplace, oracle network, fraud court, reputation registry, or proof of all indexed data. It does not promise that a financially correct state value leads to a good decision.
-
+BlockTerms is not an investment agent, exchange, unrestricted API bazaar, oracle network, fraud court, subjective reputation registry, or proof of all indexed data. Its curated marketplace only activates products with an executable supported proof profile. It does not promise that a financially correct state value leads to a good decision.

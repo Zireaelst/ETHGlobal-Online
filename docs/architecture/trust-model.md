@@ -12,6 +12,7 @@ For a known source-chain contract and storage layout, a bounded account/storage 
 - The Graph provider and source RPC remain available.
 - The source protocol contract itself has the intended semantics.
 - Provider admission is curated in the first release.
+- Marketplace credentials establish reviewed eligibility claims only. Their issuers, expiry, and references do not establish data ownership or correctness.
 
 Running three observer processes under one operator is not three independent trust domains. Operator relationships must be disclosed.
 
@@ -25,10 +26,17 @@ Running three observer processes under one operator is not three independent tru
 - A provider must publish the complete bounded public witness by the deadline. A hash without available bytes is not delivery.
 - `PaymentPending` must reconcile before retry or collateral release.
 - A terminal order cannot return to an active state.
+- A marketplace order cannot silently follow a listing update. Product ID, version, provider, payment network, resource URL, and price remain pinned from selection through execution.
 
 ## Agent boundary
 
 Provider content and model text are untrusted. The model can propose a supported query AST and rank quotes. Deterministic policy code enforces providers, chains, deployments, fields, maximum age, total budget, retry count, asset, payee, collateral minimum and verifier version. Spending-limit changes and unsupported scopes require human approval.
+
+Marketplace search returns deterministic filter inputs and objective finalized-order metrics. It does not publish subjective star ratings. Live and simulation outcomes are stored and displayed separately.
+
+## Marketplace audit boundary
+
+The optional HCS adapter commits a canonical SHA-256 digest plus event identity to a configured topic. It does not publish the product payload, credential payload, buyer data, keys, or tokens. HCS ordering can show that a digest was anchored at a point in time; it does not approve a listing, validate a Graph result, prove data ownership, or replace the order verifier. Without `HCS_TOPIC_ID` and a Hedera operator, the adapter reports `configuration_required` and does not invent a reference.
 
 ## Proof limits shown in the UI
 

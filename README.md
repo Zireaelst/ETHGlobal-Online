@@ -6,7 +6,7 @@ An agent requests a narrowly scoped snapshot, compares signed provider quotes, r
 
 ## Status
 
-The web MVP and production-local agent runtime are implemented. The runtime has one durable order service exposed through a TypeScript SDK, REST API, `npx` CLI, and MCP stdio server. Deterministic simulation works without credentials. Live adapters for two standardized Graph deployments, bounded EIP-1186 data, and Hedera x402 are implemented and remain gated on funded accounts and owner-supplied endpoints. No live transaction evidence is claimed before those inputs exist.
+The web MVP, curated data marketplace, and production-local agent runtime are implemented. Humans and agents can submit, review, discover, bundle, and purchase version-pinned products through one durable service exposed by a TypeScript SDK, REST API, `npx` CLI, and MCP stdio server. Deterministic simulation works without credentials. Live adapters for two standardized Graph deployments, bounded EIP-1186 data, Hedera x402, optional HCS audit anchoring, and external credential verification are implemented and remain gated on funded accounts and owner-supplied endpoints. No live transaction evidence is claimed before those inputs exist.
 
 ## Local quickstart
 
@@ -17,6 +17,7 @@ pnpm install --frozen-lockfile
 pnpm agent:e2e
 pnpm agent:cli -- example --mode simulation
 pnpm agent:cli -- submit --file examples/requests/simulation.json --run
+pnpm agent:cli -- market list
 ```
 
 The final command prints one JSON order. Local state defaults to `.blockterms/orders.json`; override it with `BLOCKTERMS_STORE_PATH`.
@@ -45,6 +46,9 @@ This is a new project. Continuity tracks are outside scope.
 - `/how-it-works` — request, payment, delivery, verification, warranty
 - `/proofs` — proof scope and trust boundaries
 - `/providers` — provider collateral and service publication
+- `/marketplace` — curated product discovery and composable bundles
+- `/marketplace/[slug]` — versioned product passport and purchase handoff
+- `/sell` — human and agent draft-listing studio
 - `/demo` — buyer-agent product console
 - `/docs` — developer onboarding and protocol documentation
 - `/product` — product scope and current release boundary
@@ -58,6 +62,7 @@ This is a new project. Continuity tracks are outside scope.
 - [Trust model](docs/architecture/trust-model.md)
 - [Agent runtime architecture](docs/architecture/agent-runtime.md)
 - [SDK, API, CLI, and MCP guide](docs/agent-interfaces.md)
+- [Verified marketplace guide](docs/marketplace.md)
 - [Vercel deployment approach](docs/deployment/vercel.md)
 - [MotionSites adaptation prompt](docs/prompts/motionsites-blockterms.md)
 - [Orca/Codex session prompt](docs/prompts/orca-codex-session.md)

@@ -12,8 +12,9 @@ Read-only capability observation (2026-09-10): `pnpm --dir spikes/blocky-capabil
 | Agent/platform consumes service and completes a real paid request | Bounded buyer agent | Decision trace, order binding, real payment and HTTP delivery |
 | Public repo with setup, architecture and payment flow | This repository | Clean-clone commands, architecture and sequence diagram |
 | Demo video ≤5 minutes showing paid request | One 240-second video | Visible request, payment, delivery and explorer receipt |
+| Agent-native procurement | Marketplace SDK, CLI, API, and MCP | Product discovery followed by a version-pinned paid order |
 
-Optional HCS audit is useful only after the base flow works. ERC-8004, HCS-14, A2A, ACP, UCP, metering, HTS custom fees, and scheduled/streamed payments are not assumed.
+The marketplace includes a real optional HCS topic-message adapter for canonical manifest and outcome digests. It remains supporting audit infrastructure; it does not substitute for the required live x402 evidence. ERC-8004, HCS-14, A2A, ACP, UCP, metering, HTS custom fees, and scheduled/streamed payments are not assumed.
 
 ## The Graph — Composable or Standardized Graph Products
 
@@ -23,6 +24,7 @@ Optional HCS audit is useful only after the base flow works. ERC-8004, HCS-14, A
 | Live Graph provider data | Runtime Graph-provider requests | Provider/deployment IDs, block metadata and sanitized network trace |
 | More than a single unstandardized subgraph query | Two protocols at a common eligible block | Side-by-side normalized output and version metadata |
 | Make standards leverage clear | Protocol-independent request/adapter | Same request shape without per-protocol UI logic |
+| Composable product | Two-to-five component `same-block-union` bundle | Versioned lineage and compatible schema/network checks |
 | Public repo and 2–4 minute video | This repository and common 240-second video | Public URLs and playable duration |
 
 Fixtures may test UI and codecs but cannot satisfy live-data requirements. `schemaVersion`, `subgraphVersion`, `methodologyVersion`, deployment and block identity remain separate fields.
@@ -50,5 +52,6 @@ The integration must preserve Blocky402 settlement, order/payment binding, and i
 - No custom facilitator presented as Blocky402.
 - No optimistic or fabricated transaction, deployment, API or explorer evidence.
 - No third sponsor submission unless every relevant row above has working evidence.
+- Credential and HCS badges cannot be presented as delivery correctness evidence.
 
 Primary source: [ETHOnline 2026 prizes](https://ethglobal.com/events/ethonline2026/prizes).
