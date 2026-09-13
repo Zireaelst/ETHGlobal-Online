@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { SiteHeader } from "./site-header";
 
 describe("SiteHeader", () => {
-  it("renders four primary routes and a demo action", () => {
+  it("renders five primary routes and a demo action", () => {
     render(<SiteHeader />);
-    expect(screen.getAllByRole("link", { name: /How It Works|Proofs|Providers|Docs/ })).toHaveLength(4);
+    expect(screen.getAllByRole("link", { name: /Marketplace|How It Works|Proofs|Providers|Docs/ })).toHaveLength(5);
     expect(screen.getAllByRole("link", { name: "Launch Demo" }).length).toBeGreaterThan(0);
   });
 

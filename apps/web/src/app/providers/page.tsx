@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PageShell } from "@/components/page-shell";
 
 export const metadata: Metadata = { title: "Providers" };
@@ -15,6 +16,7 @@ export default function ProvidersPage() {
         <article><span className="ledger-num">05</span><div><h2>Resolve</h2><p>Release after acceptance or pay a separate warranty when objective terms fail.</p></div><strong>Terminal</strong></article>
       </section>
       <aside className="callout"><h2>Reserved means unavailable.</h2><p>Active liabilities cannot be withdrawn, reused or counted as free collateral. Provider admission is curated in the first release and disclosed as a trust boundary.</p></aside>
+      <div className="docs-next"><Link href="/providers/provider-atlas">Inspect example agent profile</Link><Link href="/sell">Open seller studio</Link></div>
     </PageShell>
   );
 }
