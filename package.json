@@ -7,6 +7,7 @@
     "build": "pnpm -r --if-present build",
     "agent:build": "pnpm -r --filter @blockterms/contracts --filter @blockterms/core --filter @blockterms/integrations --filter @blockterms/sdk --filter @blockterms/api --filter blockterms --filter @blockterms/mcp build",
     "agent:e2e": "pnpm agent:build && node scripts/e2e-agent-interfaces.mjs",
+    "market:e2e": "pnpm agent:build && node scripts/e2e-marketplace.mjs",
     "agent:serve": "pnpm --filter @blockterms/api build && node services/api/dist/cli.js",
     "agent:cli": "pnpm --filter blockterms build && node apps/cli/dist/index.js",
     "agent:mcp": "pnpm --filter @blockterms/mcp build && node apps/mcp/dist/index.js",
@@ -16,7 +17,7 @@
     "test": "pnpm -r --if-present test",
     "check:evidence": "node scripts/check-no-fake-evidence.mjs",
     "check:agent-docs": "node scripts/check-agent-docs.mjs",
-    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:evidence && pnpm check:agent-docs && pnpm build && pnpm agent:e2e"
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:evidence && pnpm check:agent-docs && pnpm build && pnpm agent:e2e && pnpm market:e2e"
   },
   "devDependencies": {
     "@types/node": "22.20.2",
