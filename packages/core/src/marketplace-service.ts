@@ -113,9 +113,31 @@ export class MarketplaceService {
         throw new BlockTermsError("VALIDATION_ERROR", "Bundle components must share one schema family and version.");
       }
       if (!sameStrings(component.manifest.networks, first.manifest.networks)) throw new BlockTermsError("VALIDATION_ERROR", "Bundle components must share compatible networks.");
+      if (component.manifest.commercial.paymentNetwork !== first.manifest.commercial.paymentNetwork || component.manifest.commercial.asset !== first.manifest.commercial.asset) {
+        throw new BlockTermsError("VALIDATION_ERROR", "Bundle components must share one settlement network and asset.");
+      }
+      if (component.manifest.verification.profile !== first.manifest.verification.profile) {
+        throw new BlockTermsError("VALIDATION_ERROR", "Bundle components must share one verification profile.");
+      }
     }
-    if (request.manifest.schema.family !== first.manifest.schema.family || !sameStrings(request.manifest.networks, first.manifest.networks)) {
+    if (request.manifest.schema.family !== first.manifest.schema.family || request.manifest.schema.version !== first.manifest.schema.version || !sameStrings(request.manifest.networks, first.manifest.networks)) {
       throw new BlockTermsError("VALIDATION_ERROR", "Bundle manifest must match component schema and networks.");
+    }
+    if (request.manifest.commercial.paymentNetwork !== first.manifest.commercial.paymentNetwork || request.manifest.commercial.asset !== first.manifest.commercial.asset) {
+      throw new BlockTermsError("VALIDATION_ERROR", "Bundle manifest must match the component settlement network and asset.");
+    }
+    if (request.manifest.verification.profile !== first.manifest.verification.profile) {
+      throw new BlockTermsError("VALIDATION_ERROR", "Bundle manifest must match the component verification profile.");
+    }
+    const requiredCredentials = components.flatMap((component) => component.manifest.access?.visibility === "credential-gated" ? component.manifest.access.requiredCredentials : []);
+    for (const requirement of requiredCredentials) {
+      const bundleRequirements = request.manifest.access?.visibility === "credential-gated" ? request.manifest.access.requiredCredentials : [];
+      const covered = bundleRequirements.some((candidate) =>
+        candidate.kind === requirement.kind
+        && candidate.issuer === requirement.issuer
+        && candidate.subject === requirement.subject,
+      );
+      if (!covered) throw new BlockTermsError("VALIDATION_ERROR", "Bundle access policy must cover every component credential requirement.");
     }
     const now = this.now();
     const product: DataProduct = { id: this.uuid(), createdAt: now, updatedAt: now, revision: 0, state: "draft", provider: request.provider, manifest: request.manifest, composition: request.composition };

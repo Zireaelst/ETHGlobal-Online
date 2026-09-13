@@ -111,6 +111,39 @@ describe("MarketplaceService", () => {
     await expect(market.createBundle(bundleRequest)).rejects.toThrow(/network/i);
   });
 
+  it("requires bundle settlement, schema version, and buyer access to cover every component", async () => {
+    const market = await service();
+    const gatedRequest = request();
+    gatedRequest.manifest.access = {
+      visibility: "credential-gated",
+      requiredCredentials: [{ kind: "organization", issuer: "kyb.example", subject: "accredited-research" }],
+    };
+    const first = await approve(market, (await market.submitProduct(gatedRequest)).id);
+    const incompatibleSettlement = request("risk-input", "provider-beacon");
+    incompatibleSettlement.manifest.commercial = { ...incompatibleSettlement.manifest.commercial, asset: "USDC" };
+    const second = await approve(market, (await market.submitProduct(incompatibleSettlement)).id);
+    const base = request("treasury-bundle");
+    const composition = { method: "same-block-union" as const, components: [
+      { productId: first.id, version: "1.0.0", outputAlias: "liquidity" },
+      { productId: second.id, version: "1.0.0", outputAlias: "risk" },
+    ] };
+    await expect(market.createBundle({ ...base, manifest: { ...base.manifest, kind: "bundle" }, composition })).rejects.toThrow(/settlement/i);
+
+    const compatibleMarket = await service();
+    const gated = await approve(compatibleMarket, (await compatibleMarket.submitProduct(gatedRequest)).id);
+    const publicProduct = await approve(compatibleMarket, (await compatibleMarket.submitProduct(request("risk-input", "provider-beacon"))).id);
+    const compatibleComposition = { ...composition, components: [
+      { productId: gated.id, version: "1.0.0", outputAlias: "liquidity" },
+      { productId: publicProduct.id, version: "1.0.0", outputAlias: "risk" },
+    ] };
+    await expect(compatibleMarket.createBundle({ ...base, manifest: { ...base.manifest, kind: "bundle" }, composition: compatibleComposition })).rejects.toThrow(/access/i);
+    await expect(compatibleMarket.createBundle({
+      ...base,
+      manifest: { ...base.manifest, slug: "private-treasury-bundle", kind: "bundle", access: gatedRequest.manifest.access },
+      composition: compatibleComposition,
+    })).resolves.toMatchObject({ state: "draft" });
+  });
+
   it("derives reputation from unique outcomes and separates simulation", async () => {
     const market = await service();
     const active = await approve(market, (await market.submitProduct(request())).id);
