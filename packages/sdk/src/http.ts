@@ -1,4 +1,13 @@
-import { BlockTermsError, SafeErrorSchema, type SubmitRequest } from "@blockterms/contracts";
+import {
+  BlockTermsError,
+  SafeErrorSchema,
+  type CreateBundleRequest,
+  type ProductFilter,
+  type RecordProductOutcomeRequest,
+  type ReviewProductRequest,
+  type SubmitProductRequest,
+  type SubmitRequest,
+} from "@blockterms/contracts";
 import type { BlockTermsTransport, ListOrdersOptions } from "./client";
 import { BlockTermsClient } from "./client";
 
@@ -29,6 +38,18 @@ class HttpTransport implements BlockTermsTransport {
     const query = options.limit === undefined ? "" : `?limit=${encodeURIComponent(String(options.limit))}`;
     return this.request("GET", `/v1/orders${query}`);
   }
+  submitProduct(input: SubmitProductRequest) { return this.request("POST", "/v1/marketplace/products", input); }
+  reviewProduct(productId: string, input: ReviewProductRequest) { return this.request("POST", `/v1/marketplace/products/${encodeURIComponent(productId)}/review`, input); }
+  getProduct(idOrSlug: string) { return this.request("GET", `/v1/marketplace/products/${encodeURIComponent(idOrSlug)}`); }
+  listProducts(filter: ProductFilter = {}) {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(filter)) if (value !== undefined) query.set(key, String(value));
+    return this.request("GET", `/v1/marketplace/products${query.size ? `?${query}` : ""}`);
+  }
+  createBundle(input: CreateBundleRequest) { return this.request("POST", "/v1/marketplace/bundles", input); }
+  listProviders() { return this.request("GET", "/v1/marketplace/providers"); }
+  getProvider(providerId: string) { return this.request("GET", `/v1/marketplace/providers/${encodeURIComponent(providerId)}`); }
+  recordOutcome(input: RecordProductOutcomeRequest) { return this.request("POST", "/v1/marketplace/outcomes", input); }
   health() { return this.request("GET", "/health"); }
   capabilities() { return this.request("GET", "/v1/capabilities"); }
 

@@ -39,4 +39,16 @@ describe("HTTP transport", () => {
 
     await expect(client.health()).rejects.toThrow(/timed out/i);
   });
+
+  it("maps marketplace discovery and review to stable endpoints", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () => new Response("[]", { status: 200, headers: { "content-type": "application/json" } }));
+    const client = createHttpClient({ baseUrl: "https://api.example", fetch: fetchMock });
+
+    await client.listProducts({ query: "liquidity", maxPriceAtomic: "100" });
+    await client.reviewProduct("00000000-0000-4000-8000-000000000001", { decision: "suspend", curatorId: "curator", reason: "Failed challenge." });
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.example/v1/marketplace/products?query=liquidity&maxPriceAtomic=100");
+    expect(fetchMock.mock.calls[1]?.[0]).toBe("https://api.example/v1/marketplace/products/00000000-0000-4000-8000-000000000001/review");
+    expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({ method: "POST" });
+  });
 });
