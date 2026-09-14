@@ -17,15 +17,25 @@ const request = {
     resourceUrl: "https://resource.example/data", deadlineMs: 5_000,
   },
 };
+const digest = `0x${"ab".repeat(32)}`;
+const product = {
+  provider: { id: "provider-atlas", type: "agent", displayName: "Atlas Agent" },
+  manifest: {
+    slug: "same-block-liquidity", name: "Same-block liquidity", summary: "Comparable live DEX liquidity with bounded proof coverage.", version: "1.0.0", kind: "snapshot", tags: ["defi"],
+    schema: { family: "messari-dex-amm", version: "1.0.0" }, networks: ["eip155:1"], deployments: ["dex-a", "dex-b"], freshnessSeconds: 30, deliverySeconds: 20,
+    commercial: { priceAtomic: "100", paymentNetwork: "hedera:testnet", asset: "HBAR", resourceUrl: "https://atlas.example/data", warrantyAtomic: "120", collateralCoverageBps: 12000 },
+    verification: { profile: "graph-eip1186-v1", maxPools: 3, maxStorageSlots: 3 }, sample: { digest, uri: "ipfs://bafy-example" }, credentials: [],
+  },
+};
 
 describe("BlockTerms MCP server", () => {
-  it("lists seven tools and runs a complete simulation over stdio", async () => {
+  it("lists order and marketplace tools and runs both surfaces over stdio", async () => {
     const directory = await mkdtemp(join(tmpdir(), "blockterms-mcp-"));
     const transport = new StdioClientTransport({
       command: process.execPath,
       args: [executable],
       cwd: packageRoot,
-      env: { ...getDefaultEnvironment(), BLOCKTERMS_STORE_PATH: join(directory, "orders.json") },
+      env: { ...getDefaultEnvironment(), BLOCKTERMS_STORE_PATH: join(directory, "orders.json"), BLOCKTERMS_MARKETPLACE_STORE_PATH: join(directory, "marketplace.json") },
       stderr: "pipe",
     });
     const client = new Client({ name: "blockterms-test", version: "0.1.0" });
@@ -33,8 +43,18 @@ describe("BlockTerms MCP server", () => {
     try {
       const tools = await client.listTools();
       expect(tools.tools.map((tool) => tool.name).sort()).toEqual([
-        "get_capabilities", "get_order", "get_result", "get_status", "list_orders", "run_order", "submit_request",
+        "blockterms_create_quote", "blockterms_get_order", "blockterms_get_product", "blockterms_get_result", "blockterms_list_products", "blockterms_purchase",
+        "create_data_bundle", "get_capabilities", "get_data_product", "get_data_provider", "get_order", "get_result", "get_status",
+        "list_data_providers", "list_orders", "review_data_product", "run_order", "search_data_products", "submit_data_product", "submit_request",
       ]);
+
+      const submittedProduct = await client.callTool({ name: "submit_data_product", arguments: { product } });
+      const productId = (submittedProduct.structuredContent as { id: string }).id;
+      await client.callTool({ name: "review_data_product", arguments: { productId, review: { decision: "approve", curatorId: "curator-blockterms", reason: "Sandbox passed.", sandbox: { passed: true, checkedAt: "2026-09-13T08:00:00.000Z", sampleDigest: digest } } } });
+      const discovered = await client.callTool({ name: "search_data_products", arguments: { filter: { query: "atlas" } } });
+      expect(discovered.structuredContent).toMatchObject({ products: [{ state: "active" }] });
+      const aliasedDiscovery = await client.callTool({ name: "blockterms_list_products", arguments: { filter: { query: "atlas" } } });
+      expect(aliasedDiscovery.structuredContent).toMatchObject({ products: [{ state: "active" }] });
 
       const submitted = await client.callTool({ name: "submit_request", arguments: { request } });
       expect(submitted.isError).not.toBe(true);

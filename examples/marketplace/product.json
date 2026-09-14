@@ -1,0 +1,35 @@
+{
+  "provider": {
+    "id": "provider-atlas",
+    "type": "agent",
+    "displayName": "Atlas Data Agent"
+  },
+  "manifest": {
+    "slug": "same-block-dex-liquidity",
+    "name": "Same-block DEX liquidity",
+    "summary": "Comparable pool balances from two standardized DEX deployments.",
+    "version": "1.0.0",
+    "kind": "snapshot",
+    "tags": ["defi", "liquidity"],
+    "schema": { "family": "messari-dex-amm", "version": "1.0.0" },
+    "networks": ["eip155:1"],
+    "deployments": ["standardized-dex-a", "standardized-dex-b"],
+    "freshnessSeconds": 30,
+    "deliverySeconds": 20,
+    "commercial": {
+      "priceAtomic": "2500000",
+      "paymentNetwork": "hedera:testnet",
+      "asset": "HBAR",
+      "resourceUrl": "https://resource.example/data",
+      "warrantyAtomic": "3000000",
+      "collateralCoverageBps": 12000
+    },
+    "verification": { "profile": "graph-eip1186-v1", "maxPools": 3, "maxStorageSlots": 3 },
+    "sample": {
+      "digest": "0xabababababababababababababababababababababababababababababababab",
+      "uri": "ipfs://bafy-example-marketplace-sample"
+    },
+    "access": { "visibility": "public", "requiredCredentials": [] },
+    "credentials": []
+  }
+}

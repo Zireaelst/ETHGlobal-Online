@@ -1,4 +1,11 @@
-import { BlockTermsError, SubmitRequestSchema } from "@blockterms/contracts";
+import {
+  BlockTermsError,
+  CreateBundleRequestSchema,
+  ProductFilterSchema,
+  ReviewProductRequestSchema,
+  SubmitProductRequestSchema,
+  SubmitRequestSchema,
+} from "@blockterms/contracts";
 import type { BlockTermsClient } from "@blockterms/sdk";
 import { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
@@ -72,5 +79,83 @@ export function createBlockTermsMcpServer(client: BlockTermsClient): McpServer {
     inputSchema: z.object({}),
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, () => execute(async () => await client.capabilities()));
+  server.registerTool("search_data_products", {
+    title: "Search verified data products",
+    description: "Discover active curated products using deterministic price, freshness, provider, schema, network, and credential filters.",
+    inputSchema: z.object({ filter: ProductFilterSchema.optional() }),
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, ({ filter }) => execute(async () => ({ products: await client.listProducts(filter ?? {}) })));
+  server.registerTool("get_data_product", {
+    title: "Get data product passport",
+    description: "Retrieve one versioned marketplace product by UUID or slug.",
+    inputSchema: z.object({ idOrSlug: z.string().min(1) }),
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, ({ idOrSlug }) => execute(async () => await client.getProduct(idOrSlug)));
+  server.registerTool("submit_data_product", {
+    title: "Submit data product draft",
+    description: "Submit a human, agent, or organization data product for curated review. Submission does not publish it.",
+    inputSchema: z.object({ product: SubmitProductRequestSchema }),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  }, ({ product }) => execute(async () => await client.submitProduct(product)));
+  server.registerTool("review_data_product", {
+    title: "Review data product",
+    description: "Apply a curator decision. Approval requires a passing sandbox result bound to the sample digest.",
+    inputSchema: z.object({ productId: z.string().uuid(), review: ReviewProductRequestSchema }),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  }, ({ productId, review }) => execute(async () => await client.reviewProduct(productId, review)));
+  server.registerTool("create_data_bundle", {
+    title: "Create composable data bundle",
+    description: "Create a draft bundle from two to five active, schema-compatible products with explicit lineage.",
+    inputSchema: z.object({ bundle: CreateBundleRequestSchema }),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  }, ({ bundle }) => execute(async () => await client.createBundle(bundle)));
+  server.registerTool("list_data_providers", {
+    title: "List data providers",
+    description: "List human, agent, and organization providers with objective live and simulation metrics.",
+    inputSchema: z.object({}),
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, () => execute(async () => ({ providers: await client.listProviders() })));
+  server.registerTool("get_data_provider", {
+    title: "Get data provider",
+    description: "Retrieve provider products, credentials, and order-derived performance facts.",
+    inputSchema: z.object({ providerId: z.string().min(3).max(64) }),
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, ({ providerId }) => execute(async () => await client.getProvider(providerId)));
+  server.registerTool("blockterms_list_products", {
+    title: "List BlockTerms products",
+    description: "Discover active versioned products. Lifecycle-oriented alias for search_data_products.",
+    inputSchema: z.object({ filter: ProductFilterSchema.optional() }),
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, ({ filter }) => execute(async () => ({ products: await client.listProducts(filter ?? {}) })));
+  server.registerTool("blockterms_get_product", {
+    title: "Get BlockTerms product",
+    description: "Retrieve a versioned product passport by UUID or slug.",
+    inputSchema: z.object({ idOrSlug: z.string().min(1) }),
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, ({ idOrSlug }) => execute(async () => await client.getProduct(idOrSlug)));
+  server.registerTool("blockterms_create_quote", {
+    title: "Create BlockTerms quote",
+    description: "Validate and persist a version-pinned order request without executing payment.",
+    inputSchema: z.object({ request: SubmitRequestSchema }),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  }, ({ request }) => execute(async () => await client.submit(request)));
+  server.registerTool("blockterms_purchase", {
+    title: "Purchase BlockTerms order",
+    description: "Execute a previously created quote using its selected live or simulation adapters.",
+    inputSchema: orderIdSchema,
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  }, ({ orderId }) => execute(async () => await client.run(orderId)));
+  server.registerTool("blockterms_get_order", {
+    title: "Get BlockTerms order",
+    description: "Retrieve the persisted order record and lifecycle state.",
+    inputSchema: orderIdSchema,
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, ({ orderId }) => execute(async () => await client.getOrder(orderId)));
+  server.registerTool("blockterms_get_result", {
+    title: "Get BlockTerms result",
+    description: "Retrieve the structured result for a completed order.",
+    inputSchema: orderIdSchema,
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, ({ orderId }) => execute(async () => await client.getResult(orderId)));
   return server;
 }

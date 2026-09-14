@@ -4,6 +4,8 @@ import {
   ExecutionResultSchema,
   parseSubmitRequest,
   type ExecutionResult,
+  type DataProduct,
+  type CredentialAccessGrant,
   type OrderEvent,
   type OrderRecord,
   type OrderStatus,
@@ -20,6 +22,8 @@ export interface BlockTermsServiceOptions {
   config: RuntimeConfig;
   clock?: () => Date;
   uuid?: () => string;
+  marketplace?: { getProduct(idOrSlug: string): Promise<DataProduct> };
+  credentialAccess?: { validate(grant: CredentialAccessGrant): Promise<boolean> };
 }
 
 export interface HealthResponse {
@@ -83,6 +87,7 @@ export class BlockTermsService {
     if (current.phase !== "queued" && current.phase !== "configuration_required") {
       throw new BlockTermsError("CONFLICT", `Order ${id} cannot run from phase ${current.phase}.`);
     }
+    await this.validateMarketplaceSelection(current.request);
 
     let selection;
     try {
@@ -254,6 +259,39 @@ export class BlockTermsService {
 
   private now(): string {
     return this.clock().toISOString();
+  }
+
+  private async validateMarketplaceSelection(request: SubmitRequest): Promise<void> {
+    const selection = request.marketplace;
+    if (!selection) return;
+    if (!this.options.marketplace) throw new BlockTermsError("CONFIGURATION_REQUIRED", "Marketplace catalog is required for a pinned product.", { missing: ["MARKETPLACE_CATALOG"] });
+    const product = await this.options.marketplace.getProduct(selection.productId);
+    if (product.state !== "active") throw new BlockTermsError("POLICY_REJECTED", "Selected marketplace product is not active.");
+    if (product.manifest.version !== selection.productVersion) throw new BlockTermsError("POLICY_REJECTED", "Selected marketplace product version changed.");
+    if (product.provider.id !== selection.providerId) throw new BlockTermsError("POLICY_REJECTED", "Selected marketplace provider changed.");
+    if (product.manifest.commercial.resourceUrl !== request.policy.resourceUrl) throw new BlockTermsError("POLICY_REJECTED", "Order resource does not match the selected product.");
+    if (!request.policy.allowedPaymentNetworks.includes(product.manifest.commercial.paymentNetwork)) throw new BlockTermsError("POLICY_REJECTED", "Selected product payment network is outside buyer policy.");
+    if (BigInt(product.manifest.commercial.priceAtomic) > BigInt(request.policy.maxPaymentAtomic)) throw new BlockTermsError("POLICY_REJECTED", "Selected product price exceeds buyer policy.");
+    const access = product.manifest.access;
+    if (access?.visibility === "credential-gated") {
+      const now = this.clock().getTime();
+      for (const requirement of access.requiredCredentials) {
+        const grant = selection.accessGrants?.find((candidate) =>
+          candidate.kind === requirement.kind
+          && (!requirement.issuer || candidate.issuer === requirement.issuer)
+          && (!requirement.subject || candidate.subject === requirement.subject)
+          && Date.parse(candidate.verifiedAt) <= now
+          && Date.parse(candidate.expiresAt) > now,
+        );
+        if (!grant) throw new BlockTermsError("POLICY_REJECTED", "Buyer does not satisfy the product credential policy.");
+        if (!this.options.credentialAccess) {
+          throw new BlockTermsError("CONFIGURATION_REQUIRED", "Credential grant validation is required for this private product.", { missing: ["CREDENTIAL_VERIFIER_URL"] });
+        }
+        if (!await this.options.credentialAccess.validate(grant)) {
+          throw new BlockTermsError("POLICY_REJECTED", "Buyer credential grant could not be validated.");
+        }
+      }
+    }
   }
 
   private event(type: string, detail?: NonNullable<OrderEvent["detail"]>): OrderEvent {

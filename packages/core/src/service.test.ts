@@ -1,7 +1,7 @@
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { ExecutionAdapters, GraphAdapter } from "./ports";
+import type { ExecutionAdapters, GraphAdapter, PaymentAdapter } from "./ports";
 import { describe, expect, it, vi } from "vitest";
 import { BlockTermsError, type SubmitRequest } from "@blockterms/contracts";
 import { readRuntimeConfig } from "./config";
@@ -59,7 +59,7 @@ function adapters(overrides: Partial<ExecutionAdapters> = {}): ExecutionAdapters
   };
 }
 
-async function service(options: { adapters?: ExecutionAdapters; environment?: Record<string, string> } = {}) {
+async function service(options: { adapters?: ExecutionAdapters; environment?: Record<string, string>; marketplace?: { getProduct(id: string): Promise<any> }; credentialAccess?: { validate(grant: any): Promise<boolean> } } = {}) {
   const directory = await mkdtemp(join(tmpdir(), "blockterms-service-"));
   let uuidCounter = 0;
   return new BlockTermsService({
@@ -68,6 +68,8 @@ async function service(options: { adapters?: ExecutionAdapters; environment?: Re
     config: readRuntimeConfig(options.environment ?? {}),
     clock: () => new Date("2026-09-12T00:00:00.000Z"),
     uuid: () => `00000000-0000-4000-8000-${String(++uuidCounter).padStart(12, "0")}`,
+    ...(options.marketplace ? { marketplace: options.marketplace } : {}),
+    ...(options.credentialAccess ? { credentialAccess: options.credentialAccess } : {}),
   });
 }
 
@@ -159,5 +161,53 @@ describe("BlockTermsService", () => {
     );
     const submitted = await runtime.submit(request);
     await expect(runtime.getResult(submitted.id)).rejects.toBeInstanceOf(BlockTermsError);
+  });
+
+  it("validates pinned marketplace terms before execution", async () => {
+    const product = {
+      id: "00000000-0000-4000-8000-000000000101", state: "active", provider: { id: "provider-atlas" },
+      manifest: { version: "1.0.0", commercial: { priceAtomic: "100", paymentNetwork: "hedera:testnet", resourceUrl: request.policy.resourceUrl } },
+    };
+    const runtime = await service({ marketplace: { getProduct: vi.fn(async () => product as any) } });
+    const submitted = await runtime.submit({ ...request, marketplace: { productId: product.id, productVersion: "1.0.0", providerId: "provider-atlas" } });
+    await expect(runtime.run(submitted.id)).resolves.toMatchObject({ phase: "completed" });
+  });
+
+  it("fails before payment when a selected product is inactive or changed", async () => {
+    const pay = vi.fn(async () => ({ receiptId: "never", network: "hedera:testnet", amountAtomic: "100", observedAt: "2026-09-12T00:00:00.000Z" }));
+    const payment: PaymentAdapter = { pay };
+    const runtime = await service({ adapters: adapters({ payment }), marketplace: { getProduct: vi.fn(async () => ({
+      id: "00000000-0000-4000-8000-000000000101", state: "suspended", provider: { id: "provider-atlas" },
+      manifest: { version: "2.0.0", commercial: { priceAtomic: "100", paymentNetwork: "hedera:testnet", resourceUrl: request.policy.resourceUrl } },
+    }) as any) } });
+    const submitted = await runtime.submit({ ...request, marketplace: { productId: "00000000-0000-4000-8000-000000000101", productVersion: "1.0.0", providerId: "provider-atlas" } });
+    await expect(runtime.run(submitted.id)).rejects.toMatchObject({ code: "POLICY_REJECTED" });
+    expect(pay).not.toHaveBeenCalled();
+  });
+
+  it("requires a verifier-backed grant for credential-gated private products", async () => {
+    const product = {
+      id: "00000000-0000-4000-8000-000000000101", state: "active", provider: { id: "provider-atlas" },
+      manifest: {
+        version: "1.0.0",
+        access: { visibility: "credential-gated", requiredCredentials: [{ kind: "organization", issuer: "kyb.example", subject: "accredited-research" }] },
+        commercial: { priceAtomic: "100", paymentNetwork: "hedera:testnet", resourceUrl: request.policy.resourceUrl },
+      },
+    };
+    const marketplace = { getProduct: vi.fn(async () => product as any) };
+    const baseSelection = { productId: product.id, productVersion: "1.0.0", providerId: "provider-atlas" };
+    const denied = await service({ marketplace });
+    const deniedOrder = await denied.submit({ ...request, marketplace: baseSelection });
+    await expect(denied.run(deniedOrder.id)).rejects.toMatchObject({ code: "POLICY_REJECTED" });
+
+    const validate = vi.fn(async () => true);
+    const allowed = await service({ marketplace, credentialAccess: { validate } });
+    const accessGrants = [{
+      kind: "organization", issuer: "kyb.example", subject: "accredited-research", verificationId: "verify-17",
+      verifiedAt: "2026-09-11T08:00:00.000Z", expiresAt: "2026-10-13T08:00:00.000Z",
+    }];
+    const order = await allowed.submit({ ...request, marketplace: { ...baseSelection, accessGrants } });
+    await expect(allowed.run(order.id)).resolves.toMatchObject({ phase: "completed" });
+    expect(validate).toHaveBeenCalledWith(accessGrants[0]);
   });
 });

@@ -1,6 +1,6 @@
 # Vercel deployment approach
 
-The Vercel project will target `apps/web` as its root directory. Marketing routes, product documentation and the demo console share one Next.js deployment and one design system.
+The Vercel project targets the repository root through `vercel.json`. The flowing marketing site, routed `/app` product, product documentation, human simulation orders, and agent connection guide share one Next.js deployment and one design system.
 
 ## Environments
 
@@ -26,7 +26,8 @@ The Vercel frontend may render public data and call controlled server routes. Te
 
 - production build, lint and typecheck succeed;
 - all routes and metadata resolve on the preview URL;
-- desktop landing remains a single viewport; mobile and subpages scroll normally;
+- landing sections flow correctly at desktop and mobile widths;
+- `/app`, marketplace, order, provider, seller, and agent-console deep links load directly;
 - video fallback and reduced-motion behavior work;
 - no secret appears in built assets or browser network payloads;
 - live/simulation badge is correct for the deployed environment;

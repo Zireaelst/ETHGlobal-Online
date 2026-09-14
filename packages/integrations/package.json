@@ -2,8 +2,16 @@
   "name": "@blockterms/integrations",
   "version": "0.1.0",
   "type": "module",
-  "files": ["dist"],
-  "exports": { ".": { "development": "./src/index.ts", "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsup src/index.ts --format esm --clean && tsc -p tsconfig.build.json",
     "test": "vitest run",
@@ -12,6 +20,7 @@
   "dependencies": {
     "@blockterms/contracts": "workspace:*",
     "@blockterms/core": "workspace:*",
+    "@hiero-ledger/sdk": "2.85.0",
     "@x402/core": "2.25.0",
     "@x402/fetch": "2.25.0",
     "@x402/hedera": "2.25.0",

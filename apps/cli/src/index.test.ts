@@ -13,7 +13,7 @@ async function run(args: string[], storePath: string) {
   return new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve, reject) => {
     const child = spawn(process.execPath, [executable, ...args], {
       cwd: packageRoot,
-      env: { ...process.env, BLOCKTERMS_STORE_PATH: storePath },
+      env: { ...process.env, BLOCKTERMS_STORE_PATH: storePath, BLOCKTERMS_MARKETPLACE_STORE_PATH: `${storePath}.catalog.json` },
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
@@ -48,11 +48,11 @@ describe("blockterms CLI", () => {
 
   it("retrieves status and result across processes", async () => {
     const store = await temporaryStore();
-    const submitted = JSON.parse((await run(["submit", "--file", fixture], store)).stdout) as { id: string };
-    expect((await run(["run", submitted.id], store)).code).toBe(0);
+    const submitted = JSON.parse((await run(["quotes", "create", "--file", fixture], store)).stdout) as { id: string };
+    expect((await run(["orders", "purchase", submitted.id], store)).code).toBe(0);
 
-    expect(JSON.parse((await run(["status", submitted.id], store)).stdout)).toMatchObject({ phase: "completed" });
-    expect(JSON.parse((await run(["result", submitted.id], store)).stdout)).toMatchObject({ mode: "simulation" });
+    expect(JSON.parse((await run(["orders", "status", submitted.id], store)).stdout)).toMatchObject({ phase: "completed" });
+    expect(JSON.parse((await run(["orders", "result", submitted.id], store)).stdout)).toMatchObject({ mode: "simulation" });
   });
 
   it("uses stable exits for invalid JSON and missing orders", async () => {
@@ -66,5 +66,28 @@ describe("blockterms CLI", () => {
     expect(JSON.parse(malformed.stderr)).toMatchObject({ error: { code: "VALIDATION_ERROR" } });
     expect(missing.code).toBe(4);
     expect(JSON.parse(missing.stderr)).toMatchObject({ error: { code: "NOT_FOUND" } });
+  });
+
+  it("submits, reviews, discovers, and retrieves a marketplace product", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "blockterms-cli-market-"));
+    const store = join(directory, "orders.json");
+    const productFile = join(directory, "product.json");
+    const digest = `0x${"ab".repeat(32)}`;
+    await writeFile(productFile, JSON.stringify({
+      provider: { id: "provider-atlas", type: "agent", displayName: "Atlas Agent" },
+      manifest: {
+        slug: "same-block-liquidity", name: "Same-block liquidity", summary: "Comparable live DEX liquidity with bounded proof coverage.", version: "1.0.0", kind: "snapshot", tags: ["defi"],
+        schema: { family: "messari-dex-amm", version: "1.0.0" }, networks: ["eip155:1"], deployments: ["dex-a", "dex-b"], freshnessSeconds: 30, deliverySeconds: 20,
+        commercial: { priceAtomic: "100", paymentNetwork: "hedera:testnet", asset: "HBAR", resourceUrl: "https://atlas.example/data", warrantyAtomic: "120", collateralCoverageBps: 12000 },
+        verification: { profile: "graph-eip1186-v1", maxPools: 3, maxStorageSlots: 3 }, sample: { digest, uri: "ipfs://bafy-example" }, credentials: [],
+      },
+    }), "utf8");
+    const draft = JSON.parse((await run(["market", "submit", "--file", productFile], store)).stdout) as { id: string };
+    const reviewFile = join(directory, "review.json");
+    await writeFile(reviewFile, JSON.stringify({ decision: "approve", curatorId: "curator-blockterms", reason: "Sandbox passed.", sandbox: { passed: true, checkedAt: "2026-09-13T08:00:00.000Z", sampleDigest: digest } }), "utf8");
+    expect((await run(["market", "review", draft.id, "--file", reviewFile], store)).code).toBe(0);
+    expect(JSON.parse((await run(["products", "list", "--query", "atlas"], store)).stdout)).toHaveLength(1);
+    expect(JSON.parse((await run(["products", "get", "same-block-liquidity"], store)).stdout)).toMatchObject({ state: "active" });
+    expect(JSON.parse((await run(["providers", "get", "provider-atlas"], store)).stdout)).toMatchObject({ provider: { type: "agent" } });
   });
 });

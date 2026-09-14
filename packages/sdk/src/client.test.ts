@@ -15,6 +15,16 @@ const request: SubmitRequest = {
   },
 };
 
+const productRequest = {
+  provider: { id: "provider-atlas", type: "agent" as const, displayName: "Atlas Agent" },
+  manifest: {
+    slug: "same-block-liquidity", name: "Same-block liquidity", summary: "Comparable live DEX liquidity with bounded proof coverage.", version: "1.0.0", kind: "snapshot" as const,
+    tags: ["defi"], schema: { family: "messari-dex-amm", version: "1.0.0" }, networks: ["eip155:1"], deployments: ["dex-a", "dex-b"], freshnessSeconds: 30, deliverySeconds: 20,
+    commercial: { priceAtomic: "100", paymentNetwork: "hedera:testnet", asset: "HBAR", resourceUrl: "https://atlas.example/data", warrantyAtomic: "120", collateralCoverageBps: 12000 },
+    verification: { profile: "graph-eip1186-v1" as const, maxPools: 3, maxStorageSlots: 3 }, sample: { digest: `0x${"ab".repeat(32)}`, uri: "ipfs://bafy-example" }, credentials: [],
+  },
+};
+
 describe("local BlockTerms client contract", () => {
   it("supports submit, run, retrieval, listing, health, and capabilities", async () => {
     const directory = await mkdtemp(join(tmpdir(), "blockterms-sdk-"));
@@ -39,5 +49,20 @@ describe("local BlockTerms client contract", () => {
     const submitted = await createLocalClient({ storePath, environment: {} }).submit(request);
 
     await expect(createLocalClient({ storePath, environment: {} }).getOrder(submitted.id)).resolves.toEqual(submitted);
+  });
+
+  it("uses the same local client for marketplace publication and discovery", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "blockterms-market-sdk-"));
+    const client = createLocalClient({ storePath: join(directory, "orders.json"), marketplaceStorePath: join(directory, "marketplace.json"), environment: {} });
+    const draft = await client.submitProduct(productRequest);
+    await expect(client.listProducts()).resolves.toEqual([]);
+    const active = await client.reviewProduct(draft.id, {
+      decision: "approve", curatorId: "curator-blockterms", reason: "Sandbox passed.",
+      sandbox: { passed: true, checkedAt: "2026-09-13T08:00:00.000Z", sampleDigest: productRequest.manifest.sample.digest },
+    });
+    await expect(client.getProduct(active.manifest.slug)).resolves.toEqual(active);
+    await expect(client.listProducts({ providerType: "agent" })).resolves.toEqual([active]);
+    await expect(client.listProviders()).resolves.toHaveLength(1);
+    await expect(client.getProvider("provider-atlas")).resolves.toMatchObject({ provider: productRequest.provider });
   });
 });

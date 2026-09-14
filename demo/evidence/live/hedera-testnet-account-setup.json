@@ -1,0 +1,17 @@
+{
+  "kind": "hedera-testnet-account-setup",
+  "qualificationScope": "setup-only-not-x402-payment",
+  "network": "hedera:testnet",
+  "command": "Hiero SDK AccountCreateTransaction with a 10 HBAR initial balance",
+  "source": "Hedera Consensus Node verified through Hedera Mirror Node",
+  "releaseCommit": "0e52eb7",
+  "buyerAccountId": "0.0.9695366",
+  "sellerAccountId": "0.0.10524176",
+  "transactionId": "0.0.9695366-1789307827-852413455",
+  "consensusTimestamp": "1789307833.714272253",
+  "result": "SUCCESS",
+  "transactionType": "CRYPTOCREATEACCOUNT",
+  "chargedTransactionFeeTinybar": "66392538",
+  "mirrorUrl": "https://testnet.mirrornode.hedera.com/api/v1/transactions/0.0.9695366-1789307827-852413455",
+  "containsSecrets": false
+}

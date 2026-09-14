@@ -50,4 +50,25 @@ describe("parseSubmitRequest", () => {
   it("rejects values that cannot be represented as JSON", () => {
     expect(() => parseSubmitRequest({ ...validRequest, metadata: { invalid: BigInt(1) } })).toThrow("JSON");
   });
+
+  it("pins a marketplace product version and provider", () => {
+    const marketplace = { productId: "00000000-0000-4000-8000-000000000101", productVersion: "1.0.0", providerId: "provider-atlas" };
+    expect(parseSubmitRequest({ ...validRequest, marketplace })).toMatchObject({ marketplace });
+    expect(() => parseSubmitRequest({ ...validRequest, marketplace: { ...marketplace, productId: "not-a-uuid" } })).toThrow(/UUID|uuid/i);
+  });
+
+  it("accepts opaque, expiring marketplace access grants and rejects secret fields", () => {
+    const marketplace = {
+      productId: "00000000-0000-4000-8000-000000000101", productVersion: "1.0.0", providerId: "provider-atlas",
+      accessGrants: [{
+        kind: "organization", issuer: "kyb.example", subject: "accredited-research", verificationId: "verify-17",
+        verifiedAt: "2026-09-13T08:00:00.000Z", expiresAt: "2026-10-13T08:00:00.000Z",
+      }],
+    };
+    expect(parseSubmitRequest({ ...validRequest, marketplace })).toMatchObject({ marketplace });
+    expect(() => parseSubmitRequest({
+      ...validRequest,
+      marketplace: { ...marketplace, accessGrants: [{ ...marketplace.accessGrants[0], credentialPayload: "private" }] },
+    })).toThrow();
+  });
 });

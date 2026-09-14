@@ -47,7 +47,7 @@ export function SiteHeader() {
         {siteConfig.nav.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
       </nav>
       <div className="header-actions">
-        <Link className="button button--primary header-demo" href={siteConfig.demoHref}>Launch Demo</Link>
+        <Link className="button button--primary header-demo" href={siteConfig.demoHref}>Open App</Link>
         <button
           aria-controls="mobile-menu"
           aria-expanded={open}
@@ -64,7 +64,7 @@ export function SiteHeader() {
         <div aria-label="Site navigation" aria-modal="true" className="mobile-menu" id="mobile-menu" ref={dialogRef} role="dialog">
           <nav aria-label="Mobile navigation">
             {siteConfig.nav.map((item) => <Link href={item.href} key={item.href} onClick={() => close()}>{item.label}</Link>)}
-            <Link className="button button--primary" href={siteConfig.demoHref} onClick={() => close()}>Launch Demo</Link>
+            <Link className="button button--primary" href={siteConfig.demoHref} onClick={() => close()}>Open App</Link>
           </nav>
           <p>Bounded data. Explicit terms. Separate warranty.</p>
         </div>
